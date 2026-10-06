@@ -137,11 +137,14 @@ a{color:inherit}
 .hot:hover .hot-label,.hot.on .hot-label{border-color:rgba(255,90,31,.6);background:rgba(28,14,8,.72)}
 
 /* мерка занижения */
-.measure{position:absolute;left:0;top:0;opacity:0;pointer-events:none;will-change:transform,opacity;display:flex;align-items:center;gap:10px}
-.measure i{display:block;width:1px;height:46px;background:linear-gradient(180deg,var(--acc),rgba(255,90,31,0));position:relative}
-.measure i::before{content:'';position:absolute;left:-5px;top:0;width:11px;height:1px;background:var(--acc)}
-.measure span{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;padding:6px 12px;border-radius:12px;background:rgba(12,12,14,.6);border:1px solid rgba(255,90,31,.45);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transform:translateY(-14px)}
+.measure{position:absolute;left:0;top:0;opacity:0;pointer-events:none;will-change:transform,opacity}
+.measure i{position:absolute;left:0;top:0;width:2px;height:var(--h,80px);background:var(--acc);box-shadow:0 0 8px rgba(255,90,31,.55)}
+.measure i::before,.measure i::after{content:'';position:absolute;left:-7px;width:16px;height:2px;background:var(--acc)}
+.measure i::before{top:0}.measure i::after{bottom:0}
+.measure span{position:absolute;left:16px;top:calc(var(--h,80px) / 2);transform:translateY(-50%);white-space:nowrap;font-family:var(--fd);font-weight:500;font-size:18px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;padding:6px 11px;border-radius:12px;background:rgba(12,12,14,.66);border:1px solid rgba(255,90,31,.45);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.hots.has-open .hot-label,.hots.has-open .hot::after{opacity:0;transition:opacity .15s}
+.hots.has-open .hot:not(.on) .hot-ring{display:none}
 
 /* карточка детали */
 .card{position:absolute;left:0;top:0;width:min(350px,calc(100vw - 24px));padding:22px 22px 20px;border-radius:24px;z-index:5;
@@ -528,11 +531,12 @@ const CONFIG = {
       lead: 'Выезжают при открытии двери и прячутся под кузов на ходу — клиренс не страдает.',
       price: 89000, from: true, unit: 'пара с установкой',
       card: { name: 'Электропороги', badge: 'Выезжают при открытии двери', text: 'Ступень выдвигается за секунду, когда открываете дверь, и убирается под кузов, когда закрываете. Алюминиевый профиль, подсветка, защита от грязи.', unit: 'пара с установкой' },
-      stage: { ph: '13', reveal: [0.48, 0.88], polys: [
-        [[0.443,0.79],[0.447,0.77],[0.705,0.598],[0.72,0.597],[0.722,0.632],[0.505,0.85],[0.447,0.852]],
-        [[0.355,0.735],[0.39,0.715],[0.41,0.73],[0.445,0.79],[0.447,0.83],[0.43,0.835],[0.40,0.79],[0.375,0.775],[0.355,0.76]],
+      // band — направление световой полосы (от кузова к краю ступени)
+      stage: { ph: '13', band: [0.48, 0.88], polys: [
+        [[0.447,0.768],[0.703,0.597],[0.716,0.596],[0.722,0.606],[0.722,0.632],[0.51,0.849],[0.447,0.853],[0.442,0.79]],
+        [[0.37,0.725],[0.395,0.712],[0.415,0.722],[0.43,0.75],[0.447,0.78],[0.447,0.84],[0.425,0.835],[0.40,0.80],[0.38,0.775],[0.366,0.75]],
       ] },
-      main: { hot: [0.70, 0.575], polys: [[[0.641,0.597],[0.643,0.586],[0.70,0.562],[0.764,0.535],[0.767,0.556],[0.705,0.588],[0.655,0.616]]] },
+      main: { hot: [0.70, 0.568] },
     },
     {
       id: 'flares', tag: 'Расширители',
@@ -541,21 +545,21 @@ const CONFIG = {
       price: 58000, from: true, unit: '4 арки с установкой',
       card: { name: 'Расширители арок', text: 'Комплект на 4 арки из ударопрочного пластика. Под вынос колёс до +40 мм, крепёж в заводские точки.', unit: '4 арки с установкой' },
       stage: { ph: '13', polys: [
-        [[0.25,0.0],[0.29,0.10],[0.32,0.20],[0.345,0.30],[0.36,0.40],[0.37,0.50],[0.38,0.60],[0.40,0.67],[0.415,0.70],[0.39,0.715],[0.36,0.67],[0.335,0.57],[0.31,0.46],[0.28,0.34],[0.245,0.22],[0.20,0.10],[0.15,0.0]],
+        [[0.235,0.0],[0.262,0.10],[0.29,0.22],[0.318,0.33],[0.343,0.43],[0.365,0.52],[0.388,0.60],[0.408,0.66],[0.418,0.70],[0.405,0.715],[0.385,0.71],
+         [0.362,0.66],[0.34,0.58],[0.318,0.50],[0.295,0.41],[0.27,0.32],[0.245,0.23],[0.215,0.14],[0.18,0.06],[0.15,0.0]],
       ] },
-      main: { hot: [0.585, 0.385], polys: [
-        [[0.396,0.402],[0.412,0.372],[0.47,0.358],[0.53,0.35],[0.585,0.352],[0.617,0.375],[0.633,0.42],[0.641,0.48],[0.638,0.525],[0.622,0.522],[0.614,0.47],[0.598,0.43],[0.565,0.408],[0.515,0.402],[0.465,0.41],[0.425,0.425],[0.402,0.44]],
-        [[0.741,0.49],[0.744,0.43],[0.756,0.407],[0.776,0.401],[0.787,0.415],[0.789,0.475],[0.781,0.478],[0.776,0.45],[0.765,0.437],[0.755,0.45],[0.75,0.49]],
-      ] },
+      main: { hot: [0.57, 0.385] },
     },
     {
-      id: 'wheels', tag: 'Колёса A/T',
-      title: 'A/T-резина<br>на тёмных дисках',
+      id: 'wheels', tag: 'Колёса M/T',
+      title: 'M/T-резина<br>на тёмных дисках',
       lead: 'Грязевой протектор и диски R17: держат на грунте и сразу меняют вид машины.',
       price: 240000, from: true, unit: 'комплект 4 шт.',
-      card: { name: 'Колёса A/T на дисках R17', text: 'Всесезонный A/T-протектор и тёмные литые диски. Подбор под вылет и лифт, шиномонтаж и балансировка — в цене.', unit: 'комплект 4 шт.' },
-      stage: { ph: '14', polys: [ell(0.5125, 0.645, 0.133, 0.19, -4)] },
-      main: { hot: [0.548, 0.665], side: 'left', polys: [ell(0.5125, 0.645, 0.133, 0.19, -4)] },
+      card: { name: 'Колёса M/T на дисках R17', text: 'Грязевой M/T-протектор и тёмные литые диски. Подбор под вылет и лифт, шиномонтаж и балансировка — в цене.', unit: 'комплект 4 шт.' },
+      // эллипс по шине (в перспективе), cut — вырез под край бампера, который заходит на шину
+      stage: { ph: '14', polys: [ell(0.5115, 0.646, 0.1335, 0.19, -3)],
+               cut: [[[0.30,0.47],[0.445,0.492],[0.452,0.53],[0.448,0.60],[0.432,0.632],[0.40,0.65],[0.30,0.65]]] },
+      main: { hot: [0.531, 0.626], side: 'left' },
     },
     {
       id: 'lift', tag: 'Лифт',
@@ -563,9 +567,10 @@ const CONFIG = {
       lead: 'Больше клиренса и места под крупные колёса — для настоящего бездорожья.',
       price: 145000, from: true, unit: 'комплект с установкой',
       card: { name: 'Лифт-комплект 2,5″ (+63 мм)', text: 'Пружины, амортизаторы и удлинённые тяги. Развал-схождение после установки — в цене.', unit: 'с установкой' },
-      stage: { ph: '12', polys: [[[0.34,0.36],[0.48,0.37],[0.62,0.40],[0.75,0.43],[0.76,0.47],[0.66,0.49],[0.55,0.49],[0.45,0.48],[0.35,0.47]]],
-               measure: { at: [0.47, 0.49], to: 63, sign: '+', unit: 'мм' } },
-      main: { hot: [0.757, 0.53], polys: [[[0.727,0.47],[0.742,0.425],[0.768,0.405],[0.787,0.425],[0.792,0.5],[0.786,0.585],[0.765,0.605],[0.742,0.6],[0.73,0.57],[0.725,0.52]]] },
+      // measure — вертикальная размерная стрелка: x и верх/низ в долях кадра (низ кузова → площадка)
+      stage: { ph: '12', polys: [ell(0.735, 0.455, 0.07, 0.165, 0)],
+               measure: { x: 0.62, top: 0.425, bottom: 0.555, to: 63, sign: '+', unit: 'мм' } },
+      main: { hot: [0.758, 0.49] },
     },
   ],
 };
@@ -685,8 +690,7 @@ function updateHUD(s) {
     if (s >= st.show[0] && s < next) act = i;
   });
   if (s >= TL.final[0]) act = N;
-  capHide += ((openId ? 1 : 0) - capHide) * 0.18;
-  const fa = sstep(TL.final[0], TL.final[0] + 0.03, s) * (1 - capHide);
+  const fa = openId ? 0 : sstep(TL.final[0], TL.final[0] + 0.03, s);   // при открытой карточке — сразу скрыть, без «призрака»
   setVis(capFinal, fa, (1 - fa) * 26);
   capFinal.classList.toggle('live', fa > .6);
   if (act !== activeStep) { activeStep = act; navBtns.forEach((b, i) => b.classList.toggle('on', i === act)); }
@@ -706,10 +710,11 @@ function openCard(id, pin = false) {
   $('#card-p').innerHTML = `${p.from ? '<span style="font-size:.6em;opacity:.6">от </span>' : ''}${money(p.price)}<small>${p.card.unit} · пример</small>`;
   openId = id; pinned = pin || pinned;
   hots.forEach(h => h.classList.toggle('on', h.dataset.id === id));
+  hotsEl.classList.add('has-open');
   card.classList.add('open');
   placeCard();
 }
-function closeCard() { openId = null; pinned = false; hots.forEach(h => h.classList.remove('on')); card.classList.remove('open'); }
+function closeCard() { openId = null; pinned = false; hots.forEach(h => h.classList.remove('on')); hotsEl.classList.remove('has-open'); card.classList.remove('open'); }
 const laterClose = () => { clearTimeout(closeTimer); if (!pinned) closeTimer = setTimeout(closeCard, 380); };
 const isSheet = () => matchMedia('(max-width:900px), (orientation:portrait)').matches;
 const hotPos = {};
@@ -834,7 +839,7 @@ const geo = (ph, polys) => {
 };
 let G = [];
 function buildGeo() {
-  G = CONFIG.parts.map(p => ({ stage: geo(p.stage.ph, p.stage.polys), main: geo(CONFIG.main, p.main.polys) }));
+  G = CONFIG.parts.map(p => ({ stage: geo(p.stage.ph, p.stage.polys), cut: p.stage.cut ? geo(p.stage.ph, p.stage.cut).polys : null }));
 }
 
 function resize() {
@@ -889,84 +894,72 @@ const sweeps = CONFIG.parts.map(() => ({ t: 1, prev: 0 }));
 const hl = CONFIG.parts.map(() => 0);
 let rollT = 9, finPrev = 0, backPh = null;
 
+/* ПРОЖЕКТОР: кадр затемняется, деталь проявляется через мягкую маску.
+   Маска рисуется «тенью» фигуры (shadowBlur) — край растушёван, никаких линий по контуру. */
+const maskCv = document.createElement('canvas'), mctx = maskCv.getContext('2d');
+const workCv = document.createElement('canvas'), wctx = workCv.getContext('2d');
+const feather = () => clamp(W * 0.0135, 9, 22);          // растушёвка в css-px (1440 → 19 px)
+function softShape(c, L, polys, dil) {
+  const OFF = c.canvas.width + 400, f = feather();
+  c.save();
+  c.shadowColor = '#fff'; c.shadowBlur = f * 2 * DPR; c.shadowOffsetX = OFF; c.shadowOffsetY = 0;
+  c.setTransform(DPR * L.s, 0, 0, DPR * L.s, DPR * L.tx - OFF, DPR * L.ty);
+  c.fillStyle = '#fff'; c.strokeStyle = '#fff'; c.lineJoin = 'round'; c.lineWidth = Math.max(0.01, (dil ?? f * 0.9) / L.s);
+  c.beginPath(); polys.forEach(pp => { c.moveTo(pp[0][0], pp[0][1]); for (let k = 1; k < pp.length; k++) c.lineTo(pp[k][0], pp[k][1]); c.closePath(); });
+  c.fill(); if (dil !== 0) c.stroke();                    // обводка уходит только в тень — расширяет маску; на экране линий нет
+  c.restore();
+}
 function drawHighlights(L, items, time) {
-  // items: [{ g, a, d, reveal, sweep }]
-  const { s: sc } = L, k = 1 / sc;
-  const im = IMG[L.ph];
+  // items: [{ g, cut, a, band, sweep }]
   const wMax = Math.max(0, ...items.map(o => o.a));
   if (wMax < 0.003) return false;
-  // затемняем кадр, кроме активных деталей (раскрывающуюся деталь — тоже: она «выедет» поверх)
-  ctx.beginPath(); ctx.rect(-im.w, -im.h, im.w * 3, im.h * 3);
-  items.forEach(o => { if (o.a > 0.02 && !o.reveal) o.g.polys.forEach(tracePoly); });
-  ctx.fillStyle = `rgba(6,6,8,${(0.52 * wMax * L.a).toFixed(3)})`;
-  ctx.fill('evenodd');
-  const pulse = reduced ? 1 : 0.72 + 0.28 * Math.sin(time * 3.1);
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  let anim = false;
+  if (maskCv.width !== cv.width || maskCv.height !== cv.height) { maskCv.width = workCv.width = cv.width; maskCv.height = workCv.height = cv.height; }
+  // 1) мягкая маска активных деталей
+  mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.clearRect(0, 0, maskCv.width, maskCv.height);
   items.forEach(o => {
-    const a = o.a * L.a; if (a < 0.003) return;
-    const g = o.g, [x0, y0, x1, y1] = g.box;
-    if (o.reveal) {
-      // «порог выезжает»: деталь раскрывается от кузова наружу, со сдвигом и сканирующей кромкой
-      const [dx0, dy0] = o.reveal, dl = Math.hypot(dx0, dy0), dx = dx0 / dl, dy = dy0 / dl;
-      const pts = g.polys.flat(), proj = pts.map(([x, y]) => x * dx + y * dy);
-      const p0 = Math.min(...proj), p1 = Math.max(...proj), f = p0 + (p1 - p0) * o.d;
-      const nx = -dy, ny = dx, BIG = 5000, cx = pts[0][0], cy = pts[0][1];
-      const base0 = p0 - (cx * dx + cy * dy), base1 = f - (cx * dx + cy * dy);
-      const half = (b) => [[cx + dx * b + nx * BIG, cy + dy * b + ny * BIG], [cx + dx * b - nx * BIG, cy + dy * b - ny * BIG]];
-      const [qa, qb] = half(base0 - 50), [qc, qd] = half(base1);
-      const slide = (1 - o.d) * 60;
-      ctx.save();
-      ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
-      ctx.beginPath(); ctx.moveTo(...qa); ctx.lineTo(...qb); ctx.lineTo(...qd); ctx.lineTo(...qc); ctx.closePath(); ctx.clip();
-      ctx.globalAlpha = L.a * Math.min(1, o.a * 1.2);
-      ctx.drawImage(im.el, -dx * slide, -dy * slide, im.w, im.h);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = `rgba(255,96,40,${(0.12 * a).toFixed(3)})`; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-      ctx.restore();
-      if (o.d > 0.01 && o.d < 0.995) {
-        // кромка сканирования
-        anim = true;
-        ctx.save(); ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
-        ctx.beginPath(); ctx.moveTo(...qc); ctx.lineTo(...qd);
-        ctx.strokeStyle = `rgba(255,120,60,${(0.5 * a).toFixed(3)})`; ctx.lineWidth = 10 * k; ctx.stroke();
-        ctx.strokeStyle = `rgba(255,240,228,${(0.95 * a).toFixed(3)})`; ctx.lineWidth = 2 * k; ctx.stroke();
-        ctx.restore();
-      }
-    } else {
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = `rgba(255,96,40,${(0.075 * a).toFixed(3)})`;
-      ctx.beginPath(); g.polys.forEach(tracePoly); ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-    }
-    // контур: мягкое свечение + яркая линия, прорисовка по мере прокрутки
-    g.polys.forEach((pp, j) => {
-      const Lj = g.lens[j];
-      ctx.setLineDash([Lj * o.d, Lj + 1]);
-      ctx.beginPath(); tracePoly(pp);
-      ctx.strokeStyle = `rgba(255,90,31,${(0.2 * a * pulse).toFixed(3)})`; ctx.lineWidth = 14 * k; ctx.stroke();
-      ctx.strokeStyle = `rgba(255,120,60,${(0.55 * a).toFixed(3)})`; ctx.lineWidth = 4.5 * k; ctx.stroke();
-      ctx.strokeStyle = `rgba(255,238,226,${(0.95 * a).toFixed(3)})`; ctx.lineWidth = 1.6 * k; ctx.stroke();
-    });
-    ctx.setLineDash([]);
-    // проход блика по детали, когда она загорается
-    if (o.sweep < 1) {
-      anim = true;
-      const bw = x1 - x0, cx = lerp(x0 - bw * 0.3, x1 + bw * 0.3, ease(o.sweep));
-      ctx.save(); ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
-      const gr = ctx.createLinearGradient(cx - bw * 0.22, y0, cx + bw * 0.22, y1);
-      const al = Math.sin(Math.PI * o.sweep) * 0.5 * a;
-      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, `rgba(255,236,220,${al.toFixed(3)})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.fillRect(x0, y0, bw, y1 - y0);
-      ctx.restore();
-    }
+    if (o.a < 0.003) return;
+    mctx.globalAlpha = Math.min(1, o.a); softShape(mctx, L, o.g.polys);
+    if (o.cut) { mctx.globalCompositeOperation = 'destination-out'; mctx.globalAlpha = 1; softShape(mctx, L, o.cut, 0); mctx.globalCompositeOperation = 'source-over'; }
   });
-  return true;
+  mctx.globalAlpha = 1;
+  // 2) затемнение ~55 % везде, кроме маски
+  wctx.setTransform(1, 0, 0, 1, 0, 0); wctx.globalCompositeOperation = 'source-over'; wctx.clearRect(0, 0, workCv.width, workCv.height);
+  wctx.fillStyle = `rgba(6,6,8,${(0.55 * wMax * L.a).toFixed(3)})`; wctx.fillRect(0, 0, workCv.width, workCv.height);
+  wctx.globalCompositeOperation = 'destination-out'; wctx.drawImage(maskCv, 0, 0);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(workCv, 0, 0);
+  // 3) лёгкое тёплое свечение детали
+  const pulse = 1;                                        // без пульса: кадр перерисовывается только при движении
+  wctx.globalCompositeOperation = 'source-over'; wctx.clearRect(0, 0, workCv.width, workCv.height);
+  wctx.drawImage(maskCv, 0, 0); wctx.globalCompositeOperation = 'source-in';
+  wctx.fillStyle = `rgba(255,128,64,${(0.1 * pulse * L.a).toFixed(3)})`; wctx.fillRect(0, 0, workCv.width, workCv.height);
+  ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(workCv, 0, 0);
+  ctx.restore();
+  let anim = false;
+  // 4) световая полоса по детали (порог: от кузова к краю ступени), обрезана той же мягкой маской
+  items.forEach(o => {
+    if (!o.band || o.sweep >= 1 || o.a < 0.05) return;
+    anim = true;
+    const [bx, by] = o.band, bl = Math.hypot(bx, by), dx = bx / bl, dy = by / bl;
+    const pts = o.g.polys.flat(), proj = pts.map(([x, y]) => x * dx + y * dy);
+    const p0 = Math.min(...proj), p1 = Math.max(...proj), span = p1 - p0;
+    const c = lerp(p0 - span * 0.35, p1 + span * 0.35, ease(o.sweep)), hw = span * 0.28;
+    const dot0 = pts[0][0] * dx + pts[0][1] * dy, ox = pts[0][0] - dx * dot0, oy = pts[0][1] - dy * dot0;
+    wctx.setTransform(1, 0, 0, 1, 0, 0); wctx.globalCompositeOperation = 'source-over'; wctx.clearRect(0, 0, workCv.width, workCv.height);
+    wctx.setTransform(DPR * L.s, 0, 0, DPR * L.s, DPR * L.tx, DPR * L.ty);
+    const gr = wctx.createLinearGradient(ox + dx * (c - hw), oy + dy * (c - hw), ox + dx * (c + hw), oy + dy * (c + hw));
+    const al = Math.sin(Math.PI * o.sweep) * 0.55 * o.a * L.a;
+    gr.addColorStop(0, 'rgba(255,236,222,0)'); gr.addColorStop(0.5, `rgba(255,236,222,${al.toFixed(3)})`); gr.addColorStop(1, 'rgba(255,236,222,0)');
+    const [x0, y0, x1, y1] = o.g.box;
+    wctx.fillStyle = gr; wctx.fillRect(x0 - span, y0 - span, x1 - x0 + 2 * span, y1 - y0 + 2 * span);
+    wctx.setTransform(1, 0, 0, 1, 0, 0); wctx.globalCompositeOperation = 'destination-in'; wctx.drawImage(maskCv, 0, 0);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(workCv, 0, 0); ctx.restore();
+  });
+  return anim;
 }
 
 function draw(s, time, fin) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
   ctx.clearRect(0, 0, cv.width, cv.height);
   let busy = false;
   const st = TL.steps;
@@ -987,18 +980,12 @@ function draw(s, time, fin) {
       ctx.fillStyle = gr; ctx.fillRect(0, im.h - f, im.w, f);
       ctx.globalCompositeOperation = 'source-over';
     }
-    // что подсвечиваем на этом кадре: этапы + финал (наведение и «перекличка»)
+    // прожектор — только на этапах; в финале одни точки
     const items = [];
     CONFIG.parts.forEach((p, i) => {
-      if (p.stage.ph === L.ph) {
-        const a = sstep(st[i].morph[0], st[i].morph[0] + 0.02, s) * (1 - sstep(st[i].show[1] - 0.035, st[i].show[1] - 0.005, s));
-        if (a > 0.003 || EDIT) items.push({ g: G[i].stage, a: EDIT ? Math.max(a, .5) : a, d: EDIT ? 1 : sstep(st[i].morph[0], st[i].morph[1], s), reveal: p.stage.reveal, sweep: sweeps[i].t });
-      }
-      if (L.ph === CONFIG.main && (fin > 0.01 || EDIT)) {
-        const r = Math.max(0, 1 - Math.abs((rollT - i * 0.34) - 0.45) / 0.45);
-        const a = Math.max(hl[i], r * 0.9);
-        if (a > 0.003 || EDIT) items.push({ g: G[i].main, a: EDIT ? Math.max(a, .5) : a, d: EDIT || hl[i] > 0.01 ? 1 : clamp((rollT - i * 0.34) / 0.45), sweep: 1 });
-      }
+      if (p.stage.ph !== L.ph) return;
+      const a = sstep(st[i].morph[0], st[i].morph[0] + 0.045, s) * (1 - sstep(st[i].show[1] - 0.035, st[i].show[1] - 0.005, s));
+      if (a > 0.003 || EDIT) items.push({ g: G[i].stage, cut: G[i].cut, a: EDIT ? Math.max(a, .8) : a, band: p.stage.band, sweep: sweeps[i].t });
     });
     if (drawHighlights(L, items, time)) busy = true;
     if (layers.fade > 0.001 && L === layers[0] && layers.length > 1) {
@@ -1016,7 +1003,7 @@ function update(s, dt, time) {
   // события: деталь загорелась → проход блика; вход в финал → «перекличка» деталей
   CONFIG.parts.forEach((p, i) => {
     const v = sstep(TL.steps[i].morph[0], TL.steps[i].morph[1], s);
-    if (sweeps[i].prev < 0.9 && v >= 0.9 && !reduced) sweeps[i].t = 0;
+    if (sweeps[i].prev < 0.5 && v >= 0.5 && !reduced && p.stage.band) sweeps[i].t = 0;
     sweeps[i].prev = v;
     if (sweeps[i].t < 1) sweeps[i].t = Math.min(1, sweeps[i].t + dt / 1.1);
   });
@@ -1038,7 +1025,7 @@ function update(s, dt, time) {
   if (topPh !== backPh) { backPh = topPh; back.src = IMG[topPh].url || ''; }
 
   const moving = Math.abs(s - lastS) > 1e-6;
-  if (moving || dirty || hlAct || rolling || needPulse || sweeps.some(x => x.t < 1)) {
+  if (moving || dirty || needPulse || sweeps.some(x => x.t < 1)) {
     needPulse = draw(s, time, fin);
     dirty = false; lastS = s;
   }
@@ -1064,10 +1051,11 @@ function update(s, dt, time) {
     const vis = layers.find(L => L.ph === ph);
     const mo = vis ? vis.a * sstep(stp.morph[0], stp.morph[0] + 0.02, s) * (1 - sstep(stp.show[1] - 0.03, stp.show[1], s)) : 0;
     if (mo > 0.001) {
-      const q = toScreen(ph, m.at), tv = sstep(stp.morph[0], stp.morph[1], s);
-      const mx = clamp(q.x + 6, 12, W - (measureEl.offsetWidth || 130) - 12), my = clamp(q.y - 40, 80, H - 120);
-      measureEl.style.transform = `translate3d(${mx.toFixed(1)}px,${my.toFixed(1)}px,0)`;
-      measureTxt.textContent = `${m.sign}${Math.round(tv * m.to)} ${m.unit}`;
+      const q1 = toScreen(ph, [m.x, m.top]), q2 = toScreen(ph, [m.x, m.bottom]), tv = sstep(stp.morph[0], stp.morph[1], s);
+      const hgt = Math.max(24, q2.y - q1.y);
+      measureEl.style.setProperty('--h', hgt.toFixed(1) + 'px');
+      measureEl.style.transform = `translate3d(${(q2.x - 1).toFixed(1)}px,${q1.y.toFixed(1)}px,0)`;   // строго вертикально: один x для верха и низа
+      measureTxt.textContent = `${m.sign}${Math.round(tv * m.to)}\u00a0${m.unit}`;
     }
     measureEl.style.opacity = mo.toFixed(3);
   }
