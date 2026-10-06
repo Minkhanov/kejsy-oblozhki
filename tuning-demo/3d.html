@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TUNE·LAB — 3D-режим · демо</title>
+<meta name="description" content="Демо-сцена тюнинг-ателье: листаете страницу — машина получает диски, плёнку, тонировку и занижение. Цены на каждом шаге.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+:root{
+  --bg:#0a0a0b; --bg-2:#111113;
+  --ink:#f3f1ec; --ink-2:rgba(243,241,236,.68); --ink-3:rgba(243,241,236,.42); --ink-4:rgba(243,241,236,.16);
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.14);
+  --acc:#ff5a1f; --acc-2:#ff8a50; --acc-glow:rgba(255,90,31,.45);
+  --bronze:#b48a58;
+  --fd:'Unbounded', 'Arial Black', system-ui, sans-serif;
+  --fb:'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fm:ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+  --ease:cubic-bezier(.2,.7,.1,1);
+  --pad:clamp(18px, 5.5vw, 88px);
+  --safe-b:env(safe-area-inset-bottom, 0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--fb);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"tnum" 0}
+html.lock,html.lock body{overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.nowrap{white-space:nowrap}
+
+/* зерно поверх всего — убирает «пластиковую» плоскость */
+.grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- шапка ---------- */
+.top{position:fixed;inset:0 0 auto 0;z-index:40;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--pad);
+  background:linear-gradient(180deg,rgba(10,10,11,.82),rgba(10,10,11,0));}
+.logo{font-family:var(--fd);font-weight:600;font-size:15px;letter-spacing:.14em;text-decoration:none;display:flex;align-items:center;gap:.08em}
+.logo i{display:inline-block;width:.42em;height:.42em;background:var(--acc);border-radius:1px;margin:0 .22em;transform:translateY(-.06em)}
+.nav{display:flex;gap:2px;padding:5px;border-radius:999px;background:rgba(14,14,16,.5);border:1px solid var(--line);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.nav button{background:none;border:0;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);padding:9px 16px;transition:color .2s,background .2s}
+.nav button.on{background:rgba(255,255,255,.07)}
+.nav button:hover,.nav button.on{color:var(--ink)}
+.nav button.on::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--acc);margin-right:8px;transform:translateY(-2px)}
+.pill{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-size:13px;font-weight:600;letter-spacing:.02em;transition:border-color .2s,background .2s,transform .2s var(--ease)}
+.pill:hover{border-color:rgba(255,90,31,.6);background:rgba(255,90,31,.08);transform:translateY(-1px)}
+.pill b{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc-glow)}
+
+.badge-demo{position:fixed;right:16px;bottom:14px;z-index:45;font-size:10px;font-weight:600;letter-spacing:.22em;color:var(--ink-3);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(10,10,11,.55);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none;white-space:nowrap}
+
+/* ---------- сцена ---------- */
+.garage{position:relative;height:540vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
+.stage-bg{position:absolute;inset:0;z-index:-2;
+  background:
+    radial-gradient(46% 38% at 58% 30%, rgba(255,255,255,.075), rgba(255,255,255,0) 70%),
+    radial-gradient(36% 46% at 4% 104%, rgba(255,90,31,.13), rgba(255,90,31,0) 70%),
+    radial-gradient(30% 30% at 100% 0%, rgba(180,138,88,.08), rgba(180,138,88,0) 70%),
+    linear-gradient(180deg,#0e0e10 0%,#0a0a0b 58%,#070708 100%)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 55% 45%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%)}
+.hud{position:absolute;inset:0;pointer-events:none}
+.hud > *{pointer-events:auto}
+
+/* первый экран */
+.hero{position:absolute;left:var(--pad);top:clamp(96px,20vh,200px);max-width:min(620px,44vw);will-change:opacity,transform}
+.kicker{display:flex;align-items:center;gap:12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.kicker::before{content:'';width:28px;height:1px;background:var(--acc)}
+.hero h1{font-family:var(--fd);font-weight:600;font-size:clamp(40px,5.4vw,92px);line-height:.98;letter-spacing:-.035em;margin:22px 0 26px}
+.hero h1 em{font-style:normal;color:var(--acc);text-shadow:0 0 40px rgba(255,90,31,.25)}
+.hero p{font-size:clamp(15px,1.2vw,18px);color:var(--ink-2);max-width:36ch}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.chip{font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--ink-2);padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.025)}
+.hint{position:absolute;left:50%;bottom:calc(26px + var(--safe-b));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;font-size:11px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);pointer-events:none}
+.hint i{position:relative;width:1px;height:46px;background:var(--ink-4);overflow:hidden}
+.hint i::after{content:'';position:absolute;left:0;top:-40%;width:1px;height:40%;background:var(--acc);animation:drip 2s var(--ease) infinite}
+@keyframes drip{0%{top:-40%}100%{top:110%}}
+
+/* подписи этапов */
+.cap{position:absolute;left:calc(var(--pad) - 28px);bottom:clamp(28px,8vh,96px);width:min(500px,42vw);padding:26px 28px 24px;border-radius:26px;opacity:0;pointer-events:none;will-change:opacity,transform;
+  background:linear-gradient(160deg,rgba(30,30,33,.6),rgba(12,12,14,.5));-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 60px -24px rgba(0,0,0,.6)}
+.cap.live{pointer-events:auto}
+.cap-k{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.cap-k b{font-family:var(--fd);font-weight:600;color:var(--acc);letter-spacing:.04em;font-size:13px}
+.cap-k i{flex:0 0 26px;height:1px;background:var(--line-2)}
+.cap-k em{font-style:normal;color:var(--ink)}
+.cap-t{font-family:var(--fd);font-weight:500;font-size:clamp(26px,2.8vw,44px);line-height:1.04;letter-spacing:-.03em;margin:18px 0 16px}
+.cap-d{font-size:clamp(15px,1.15vw,17px);color:var(--ink-2);max-width:36ch}
+.cap-p{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.cap-p .from{font-size:13px;color:var(--ink-3)}
+.cap-p strong{font-family:var(--fd);font-weight:500;font-size:clamp(20px,1.7vw,26px);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cap-p small{font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.cap-bar{display:flex;gap:5px;margin-top:18px}
+/* подпись собирается «лесенкой» синхронно со скроллом этапа */
+.cap-k,.cap-t,.cap-d,.cap-p{transform:translate3d(0,calc((1 - var(--o,1)) * var(--d)),0)}
+.cap-k{--d:6px}.cap-t{--d:16px}.cap-d{--d:26px}.cap-p{--d:36px}
+.cap-bar span{flex:1;height:3px;border-radius:2px;background:var(--ink-4)}
+.cap-bar span.on{background:var(--acc)}
+.cap .btn{margin-top:22px}
+
+/* хотспоты */
+.hots{position:absolute;inset:0;pointer-events:none;opacity:0}
+.hots.live .hot{pointer-events:auto}
+.hot{position:absolute;left:0;top:0;width:52px;height:52px;margin:-26px 0 0 -26px;border:0;background:none;pointer-events:none;touch-action:manipulation;will-change:transform;outline:none}
+.hot-ring{position:absolute;inset:6px;border-radius:50%;border:1.5px solid rgba(255,90,31,.75);animation:ring 2.6s var(--ease) infinite}
+.hot:nth-child(2) .hot-ring{animation-delay:.6s}.hot:nth-child(3) .hot-ring{animation-delay:1.2s}.hot:nth-child(4) .hot-ring{animation-delay:1.8s}
+@keyframes ring{0%{transform:scale(.5);opacity:.95}100%{transform:scale(1.45);opacity:0}}
+.hot-core{position:absolute;inset:16px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 5px rgba(255,90,31,.22),0 0 26px rgba(255,90,31,.7);transition:transform .25s var(--ease)}
+.hot-core::after{content:'';position:absolute;inset:6px;border-radius:50%;background:#fff}
+.hot:hover .hot-core,.hot.on .hot-core,.hot:focus-visible .hot-core{transform:scale(1.25)}
+.hot::after{content:'';position:absolute;left:38px;top:50%;width:22px;height:1px;background:linear-gradient(90deg,rgba(255,90,31,.9),rgba(255,255,255,.35));pointer-events:none}
+.hot.left::after{left:auto;right:38px;background:linear-gradient(270deg,rgba(255,90,31,.9),rgba(255,255,255,.35))}
+.hot-label{position:absolute;left:60px;top:50%;transform:translate(0,-50%);white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:7px 11px;border-radius:999px;color:var(--ink);
+  background:rgba(12,12,14,.62);border:1px solid var(--line-2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:border-color .2s,background .2s}
+.hot-label em{font-style:normal;color:var(--ink-3);margin-left:8px;letter-spacing:.04em;text-transform:none;font-variant-numeric:tabular-nums}
+.hot.left .hot-label{left:auto;right:60px}
+.hot:hover .hot-label,.hot.on .hot-label{border-color:rgba(255,90,31,.6);background:rgba(28,14,8,.72)}
+
+/* мерка занижения */
+.measure{position:absolute;left:0;top:0;opacity:0;pointer-events:none;will-change:transform,opacity;display:flex;align-items:center;gap:10px}
+.measure i{display:block;width:1px;height:46px;background:linear-gradient(180deg,var(--acc),rgba(255,90,31,0));position:relative}
+.measure i::before{content:'';position:absolute;left:-5px;top:0;width:11px;height:1px;background:var(--acc)}
+.measure span{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;padding:6px 12px;border-radius:12px;background:rgba(12,12,14,.6);border:1px solid rgba(255,90,31,.45);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transform:translateY(-14px)}
+
+/* карточка детали */
+.card{position:absolute;left:0;top:0;width:min(350px,calc(100vw - 24px));padding:22px 22px 20px;border-radius:24px;z-index:5;
+  background:linear-gradient(155deg,rgba(40,40,44,.74),rgba(16,16,18,.66));-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.11);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 30px 70px -18px rgba(0,0,0,.75),0 2px 10px rgba(0,0,0,.35);
+  opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:opacity .22s,transform .32s var(--ease),visibility 0s .32s}
+.card.open{opacity:1;visibility:visible;transform:none;transition:opacity .22s,transform .32s var(--ease),visibility 0s}
+.card-x{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);display:grid;place-items:center;color:var(--ink-2)}
+.card-x:hover{color:var(--ink);border-color:var(--line-2)}
+.card-k{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+.card-t{font-family:var(--fd);font-weight:500;font-size:21px;line-height:1.15;letter-spacing:-.02em;margin:10px 40px 10px 0}
+.card-d{font-size:14px;line-height:1.5;color:var(--ink-2)}
+.card-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.card-p{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.card-p small{display:block;font-family:var(--fb);font-weight:500;font-size:11px;letter-spacing:.04em;color:var(--ink-3);margin-top:5px}
+
+/* кнопки */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;padding:0 22px;border:0;border-radius:999px;background:var(--acc);color:#140904;font-weight:700;font-size:15px;letter-spacing:.01em;white-space:nowrap;
+  box-shadow:0 0 0 1px rgba(255,140,90,.5) inset,0 10px 30px -10px rgba(255,90,31,.8);transition:transform .2s var(--ease),box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-1px);background:#ff6a33;box-shadow:0 0 0 1px rgba(255,170,130,.6) inset,0 14px 36px -10px rgba(255,90,31,.95)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn svg{width:16px;height:16px}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--ink);box-shadow:0 0 0 1px var(--line-2) inset}
+.btn-ghost:hover{background:rgba(255,255,255,.09);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+
+/* загрузка / заглушка */
+.loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(60% 50% at 50% 45%,#141416,#0a0a0b 70%);transition:opacity .7s var(--ease),visibility 0s .7s}
+.loader.done{opacity:0;visibility:hidden}
+.loader-in{width:min(320px,80vw);text-align:center}
+.loader .logo{justify-content:center;font-size:18px}
+.loader-bar{height:2px;margin:26px 0 14px;background:var(--ink-4);border-radius:2px;overflow:hidden}
+.loader-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--acc),var(--acc-2));transform-origin:left;transform:scaleX(0);transition:transform .25s}
+.loader-txt{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.loader-txt b{color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.fallback{position:absolute;inset:0;z-index:15;display:none;place-items:center;padding:24px}
+.fallback.show{display:grid}
+.fallback-box{max-width:440px;padding:28px;border-radius:24px;border:1px solid var(--line-2);background:rgba(18,18,20,.7);text-align:left;margin-top:-18vh}
+.fallback-box h3{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;margin-bottom:10px}
+.fallback-box p{font-size:14px;color:var(--ink-2)}
+.fallback-box .btn{margin-top:18px}
+
+/* ---------- блок «Как это будет» ---------- */
+.how{position:relative;padding:clamp(96px,14vw,176px) var(--pad) clamp(72px,9vw,120px);
+  background:radial-gradient(40% 40% at 92% 10%,rgba(255,90,31,.08),rgba(255,90,31,0) 70%),radial-gradient(50% 40% at 0% 80%,rgba(180,138,88,.06),rgba(180,138,88,0) 70%),linear-gradient(180deg,#070708,#0b0b0c 30%,#0a0a0b)}
+.how-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:32px 64px;align-items:end;max-width:1280px;margin:0 auto 56px}
+.how-head h2{font-family:var(--fd);font-weight:500;font-size:clamp(32px,4.6vw,68px);line-height:1;letter-spacing:-.035em;margin-top:22px}
+.how-head p{font-size:clamp(15px,1.2vw,18px);color:var(--ink-2);max-width:42ch}
+.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;max-width:1280px;margin:0 auto}
+.b{position:relative;overflow:hidden;border-radius:26px;padding:clamp(22px,2.4vw,34px);min-height:240px;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);
+  opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease),border-color .3s}
+.b.in{opacity:1;transform:none}
+.b:hover{border-color:var(--line-2)}
+.b-k{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+.b h3{font-family:var(--fd);font-weight:500;font-size:clamp(19px,1.6vw,24px);line-height:1.15;letter-spacing:-.02em;margin:14px 0 10px}
+.b p{font-size:15px;color:var(--ink-2);max-width:44ch}
+.b-1{grid-column:span 7;grid-row:span 2;min-height:520px}
+.b-2{grid-column:span 5}
+.b-3{grid-column:span 5}
+.b-4{grid-column:span 5}
+.b-5{grid-column:span 7}
+.b-1 .huge{position:absolute;right:-.06em;bottom:-.2em;font-family:var(--fd);font-weight:700;font-size:clamp(160px,22vw,330px);line-height:1;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.09);pointer-events:none}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto;padding-top:28px;position:relative}
+.flow span{font-size:13px;font-weight:500;padding:9px 14px;border-radius:12px;border:1px solid var(--line-2);background:rgba(10,10,11,.6)}
+.flow span.acc{border-color:rgba(255,90,31,.55);color:#ffd9c9;background:rgba(255,90,31,.08)}
+.flow svg{width:18px;height:18px;color:var(--ink-3)}
+.code{margin-top:auto;padding:16px 18px;border-radius:16px;background:rgba(0,0,0,.42);border:1px solid var(--line);font-family:var(--fm);font-size:12.5px;line-height:1.75;color:var(--ink-2);white-space:pre;overflow:hidden}
+.code .k{color:#9ad1ff}.code .s{color:#ffc29f}.code .n{color:var(--acc-2)}.code .c{color:var(--ink-3)}
+.funnel{margin-top:auto;display:grid;gap:8px;padding-top:18px}
+.funnel div{display:grid;grid-template-columns:112px 1fr 40px;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+.funnel i{height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,.28),rgba(255,255,255,.12));transform-origin:left;transform:scaleX(0);transition:transform 1.1s var(--ease)}
+.b.in .funnel i{transform:scaleX(var(--w))}
+.funnel div:last-child i{background:linear-gradient(90deg,var(--acc),var(--acc-2))}
+.funnel b{font-weight:600;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.tg{margin-top:auto;align-self:flex-start;max-width:320px;padding:14px 16px 10px;border-radius:18px 18px 18px 6px;background:#1c2733;border:1px solid rgba(120,170,220,.18);font-size:13.5px;line-height:1.45}
+.tg .h{font-weight:700;color:#7cc3ff;margin-bottom:4px}
+.tg .m{color:#dfe9f3}
+.tg .t{text-align:right;font-size:11px;color:rgba(223,233,243,.5);margin-top:4px}
+.swap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:22px}
+.swap code{font-family:var(--fm);font-size:13px;padding:9px 13px;border-radius:12px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);color:var(--ink-2)}
+.swap code.acc{border-color:rgba(255,90,31,.5);color:#ffd9c9}
+.swap svg{width:18px;height:18px;color:var(--acc)}
+.how-cta{max-width:1280px;margin:56px auto 0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;padding-top:32px;border-top:1px solid var(--line)}
+.how-cta p{font-size:15px;color:var(--ink-2);max-width:56ch}
+.how-cta .row{display:flex;flex-wrap:wrap;gap:12px}
+
+.foot{padding:28px var(--pad) calc(28px + var(--safe-b));display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);background:#080809}
+.foot b{color:var(--ink-2);font-weight:600}
+
+/* ---------- модалка ---------- */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(5,5,6,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s}
+.modal.open{opacity:1;visibility:visible;transition:opacity .25s,visibility 0s}
+.modal-box{position:relative;width:min(460px,100%);padding:30px 28px 24px;border-radius:28px;background:linear-gradient(160deg,#1b1b1e,#121214);border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 40px 90px -20px rgba(0,0,0,.8);transform:translateY(14px) scale(.98);transition:transform .35s var(--ease)}
+.modal.open .modal-box{transform:none}
+.modal h3{font-family:var(--fd);font-weight:500;font-size:22px;line-height:1.15;letter-spacing:-.02em;margin:10px 44px 6px 0}
+.modal .sub{font-size:14px;color:var(--ink-2)}
+.modal form{display:grid;gap:12px;margin-top:22px}
+.field{display:grid;gap:7px}
+.field span{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.field input{height:52px;padding:0 16px;border-radius:14px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:rgba(255,90,31,.7);box-shadow:0 0 0 4px rgba(255,90,31,.14)}
+.field input.bad{border-color:#ff4d4d}
+.modal .btn{width:100%;margin-top:6px}
+.note{display:flex;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;background:rgba(255,90,31,.07);border:1px solid rgba(255,90,31,.25);font-size:12.5px;line-height:1.45;color:#f6d6c7}
+.note svg{flex:0 0 16px;height:16px;margin-top:1px;color:var(--acc)}
+.done-view{display:none;text-align:left;padding-top:8px}
+.modal.sent form{display:none}.modal.sent .done-view{display:block}
+.done-view .ok{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.45);color:var(--acc);margin:18px 0 14px}
+.done-view p{font-size:14px;color:var(--ink-2)}
+.done-view .btn{margin-top:18px}
+
+/* ---------- вход ---------- */
+.ready .hero > *{animation:rise .9s var(--ease) both}
+.ready .hero > :nth-child(2){animation-delay:.08s}.ready .hero > :nth-child(3){animation-delay:.16s}.ready .hero > :nth-child(4){animation-delay:.24s}
+.ready .top{animation:fade .9s .2s both}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* ---------- адаптив ---------- */
+@media (max-width:1100px){
+  .nav{display:none}
+}
+@media (max-width:900px), (orientation:portrait){
+  .hero{left:20px;right:20px;top:108px;max-width:none}
+  .hero h1{font-size:clamp(38px,10.4vw,76px);margin:16px 0 16px}
+  .hero p{font-size:15px;max-width:40ch}
+  .hero .chips{display:none}
+  .cap{left:12px;right:12px;bottom:calc(12px + var(--safe-b));width:auto;padding:20px 20px 18px;border-radius:24px;
+    background:linear-gradient(160deg,rgba(30,30,33,.72),rgba(14,14,16,.7));-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--line-2)}
+  .cap-t{font-size:clamp(22px,6vw,34px);margin:12px 0 8px}
+  .cap-t br{display:none}
+  .cap-d{font-size:14px}
+  .cap-p{margin-top:14px;padding-top:12px}
+  .cap-p strong{font-size:19px}
+  .cap-bar{display:flex}
+  .cap .btn{margin-top:14px;width:100%}
+  .hot-label,.hot::after{display:none}
+  .hot-core{inset:19px;box-shadow:0 0 0 4px rgba(255,90,31,.25),0 0 14px rgba(255,90,31,.55)}
+  .hot-core::after{inset:4px}
+  .hot-ring{inset:10px}
+  .badge-demo{bottom:auto;top:64px;left:20px;right:auto;font-size:9px;padding:4px 9px}
+  .card{left:12px !important;right:12px;top:auto !important;bottom:calc(12px + var(--safe-b));width:auto}
+}
+@media (min-width:600px) and (orientation:portrait){
+  .cap{left:24px;right:auto;width:min(520px,calc(100% - 48px));bottom:calc(24px + var(--safe-b))}
+  .card{left:24px !important;right:24px;bottom:calc(24px + var(--safe-b))}
+  .hero{left:32px;top:124px}
+  .badge-demo{left:32px}
+}
+@media (max-width:900px){
+  .how-head{grid-template-columns:1fr;margin-bottom:36px}
+  .bento{grid-template-columns:1fr}
+  .b-1,.b-2,.b-3,.b-4,.b-5{grid-column:auto;grid-row:auto;min-height:0}
+  .b-1{min-height:380px}
+  .how-cta{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:420px){
+  .top{height:60px}
+  .pill{height:36px;padding:0 14px;font-size:12px}
+  .modal{place-items:end center;padding:10px}
+  .modal-box{padding:26px 20px calc(20px + var(--safe-b));border-radius:26px}
+  .funnel div{grid-template-columns:96px 1fr 34px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
+  .hot-ring{display:none}
+}
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="logo" href="#garage" aria-label="TUNE·LAB — наверх">TUNE<i></i>LAB</a>
+  <nav class="nav" aria-label="Этапы прокачки" id="nav"></nav>
+  <button class="pill" type="button" data-order="visit"><b></b>Записаться</button>
+</header>
+<div class="badge-demo">ДЕМО · SHERKHAN MM</div>
+
+<main>
+<section class="garage" id="garage" aria-label="Прокачка машины на глазах">
+  <div class="stage" id="stage">
+    <div class="stage-bg"></div>
+    <canvas id="gl" aria-label="3D-сцена: машина в студии"></canvas>
+    <div class="vignette"></div>
+
+    <div class="hud" id="hud">
+      <div class="hero" id="hero">
+        <div class="kicker">Тюнинг-ателье TUNE·LAB</div>
+        <h1>Сток —<br>это <em>черновик</em></h1>
+        <p>Листайте вниз — и на ваших глазах машина получит диски, плёнку, тонировку и занижение. Цена — на каждом шаге.</p>
+        <div class="chips"><span class="chip">4 этапа</span><span class="chip">цены от ателье</span><span class="chip">заявка в один клик</span></div>
+      </div>
+      <div class="hint" id="hint">Листайте<i></i></div>
+      <div id="caps"></div>
+      <div class="hots" id="hots"></div>
+      <div class="measure" id="measure" aria-hidden="true"><i></i><span class="num">−0 мм</span></div>
+      <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-t">
+        <button class="card-x" type="button" aria-label="Закрыть карточку"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+        <div class="card-k" id="card-k"></div>
+        <h3 class="card-t" id="card-t"></h3>
+        <p class="card-d" id="card-d"></p>
+        <div class="card-row">
+          <div class="card-p" id="card-p"></div>
+          <button class="btn" type="button" id="card-order">Заказать</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fallback" id="fallback" role="status">
+      <div class="fallback-box">
+        <div class="kicker" style="margin-bottom:14px">3D недоступно</div>
+        <h3 id="fb-t">Ваш браузер не поддерживает WebGL</h3>
+        <p id="fb-d">Подписи этапов и цены работают — листайте дальше. Чтобы увидеть машину в 3D, откройте страницу в свежем Chrome, Safari или Яндекс Браузере.</p>
+        <button class="btn btn-ghost" type="button" id="fb-retry" hidden>Обновить страницу</button>
+      </div>
+    </div>
+
+    <div class="loader" id="loader" role="status" aria-live="polite">
+      <div class="loader-in">
+        <div class="logo">TUNE<i></i>LAB</div>
+        <div class="loader-bar"><i id="loader-bar"></i></div>
+        <div class="loader-txt"><span id="loader-msg">Готовим бокс</span><b id="loader-pct">0 %</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how" aria-labelledby="how-t">
+  <div class="how-head">
+    <div>
+      <div class="kicker">Для вашего ателье</div>
+      <h2 id="how-t">Как это будет<br>на вашей машине</h2>
+    </div>
+    <p>Эта сцена — шаблон. Подставляем вашу машину, ваши детали и ваши цены — и получаем страницу, которая продаёт тюнинг ещё до звонка.</p>
+  </div>
+
+  <div class="bento">
+    <article class="b b-1">
+      <div class="b-k">Модель</div>
+      <h3>Ваши фото или 3D</h3>
+      <p>Снимаем машину серией кадров или берём готовую 3D-модель — сценарий прокачки остаётся тем же: диски, плёнка, тонировка, подвеска.</p>
+      <div class="flow">
+        <span>24–36 кадров</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span>3D-модель</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span class="acc">Сцена, как здесь</span>
+      </div>
+      <div class="huge" aria-hidden="true">3D</div>
+    </article>
+
+    <article class="b b-2">
+      <div class="b-k">Один конфиг</div>
+      <h3>Детали и цены — в одном месте</h3>
+      <p>Поменяли цену в конфиге — она обновилась в подписи, на точке и в заявке.</p>
+      <div class="code" aria-label="Пример конфига"><span class="c">// config.js</span>
+{ <span class="k">name</span>: <span class="s">"Диски R19"</span>,  <span class="k">price</span>: <span class="n">68000</span> },
+{ <span class="k">name</span>: <span class="s">"Плёнка"</span>,     <span class="k">price</span>: <span class="n">145000</span> },
+{ <span class="k">name</span>: <span class="s">"Тонировка"</span>,  <span class="k">price</span>: <span class="n">9500</span> }</div>
+    </article>
+
+    <article class="b b-3">
+      <div class="b-k">Яндекс Метрика</div>
+      <h3>Цели на каждом шаге</h3>
+      <p>Видно, до какого этапа долистывают и какую деталь заказывают чаще.</p>
+      <div class="funnel" aria-label="Пример воронки">
+        <div><span>Диски</span><i style="--w:1"></i><b>100%</b></div>
+        <div><span>Плёнка</span><i style="--w:.84"></i><b>84%</b></div>
+        <div><span>Занижение</span><i style="--w:.66"></i><b>66%</b></div>
+        <div><span>«Заказать»</span><i style="--w:.14"></i><b>14%</b></div>
+      </div>
+    </article>
+
+    <article class="b b-4">
+      <div class="b-k">Заявки</div>
+      <h3>Сразу в Telegram и на почту</h3>
+      <p>Имя, телефон и выбранная деталь — менеджеру за секунды.</p>
+      <div class="tg" aria-label="Пример уведомления">
+        <div class="h">TUNE·LAB · заявка с сайта</div>
+        <div class="m">Кованые диски R19 — 68 000 ₽<br>Алексей · +7 9•• •••-••-41</div>
+        <div class="t">12:41</div>
+      </div>
+    </article>
+
+    <article class="b b-5">
+      <div class="b-k">Масштаб</div>
+      <h3>Новая машина — новая страница</h3>
+      <p>Без переделки кода: меняем модель и конфиг — анимации, точки с ценами и форма заявки работают сами. Хоть отдельная страница под каждую модель.</p>
+      <div class="swap">
+        <code>ferrari.glb</code>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
+        <code class="acc">ваша-машина.glb</code>
+        <code>config.js</code>
+      </div>
+    </article>
+  </div>
+
+  <div class="how-cta">
+    <p>Это демонстрация подхода: машина, детали и цены — примерные. Для вашего магазина соберём то же самое на ваших товарах.</p>
+    <div class="row">
+      <button class="btn" type="button" data-order="visit">Оставить заявку</button>
+      <a class="btn btn-ghost" href="index.html">Фото-режим на Jeep</a>
+      <button class="btn btn-ghost" type="button" id="to-top">Наверх — собрать ещё раз
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <span><b>TUNE·LAB</b> — вымышленный бренд. Цены — пример.</span>
+  <span>3D-модель: Ferrari 458 Italia — vicent091036, Sketchfab. Демонстрационная страница</span>
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-t">
+  <div class="modal-box">
+    <button class="card-x" type="button" data-close aria-label="Закрыть"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+    <div class="card-k">Заявка</div>
+    <h3 id="modal-t">Кованые диски R19</h3>
+    <div class="sub" id="modal-sub"></div>
+    <form id="form" novalidate>
+      <label class="field"><span>Имя</span><input name="name" id="f-name" autocomplete="name" placeholder="Как к вам обращаться" required></label>
+      <label class="field"><span>Телефон</span><input name="tel" id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" required></label>
+      <button class="btn" type="submit">Отправить заявку</button>
+    </form>
+    <div class="done-view" role="status">
+      <div class="ok"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+      <h3 style="margin:0 0 6px">Готово — это была демо-заявка</h3>
+      <p>Никуда не отправлено. В рабочей версии менеджер уже видел бы её в Telegram и на почте.</p>
+      <button class="btn btn-ghost" type="button" data-close>Закрыть</button>
+    </div>
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>
+      <span>Это демо: заявка никуда не отправляется. В рабочей версии — сразу вам в Telegram и на почту.</span></div>
+  </div>
+</div>
+
+<noscript><div style="position:fixed;inset:auto 16px 16px 16px;z-index:99;padding:16px;border-radius:16px;background:#1a1a1c;color:#f3f1ec;font:14px/1.5 system-ui">Для 3D-сцены включите JavaScript.</div></noscript>
+
+<script type="module">
+/* =====================================================================
+   КОНФИГ — всё, что меняется под заказчика, живёт здесь.
+   Детали, тексты, цены, какие меши красим, цвета «до» и «после»,
+   точки-хотспоты (координаты в метрах, машина стоит в начале координат,
+   нос смотрит в −Z, правый борт — +X).
+   ===================================================================== */
+const CONFIG = {
+  brand: 'TUNE·LAB',
+  model: {
+    url:   'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/ferrari.glb',
+    draco: 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/',
+    ao:    'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/ferrari_ao.png',
+    bytes: 1681572,          // для прогресса, если CDN не отдаёт длину
+    neutral: ['centre*', 'yellow_trim'],   // меши, которые красим в нейтральный цвет (шильды)
+  },
+  lowerMm: 35,               // на сколько садим кузов на этапе «Занижение»
+  parts: [
+    {
+      id: 'rims', tag: 'Диски',
+      title: 'Кованые R19<br>в тёмной бронзе',
+      lead: 'Легче литых: руль отзывчивее, а машина сразу выглядит иначе.',
+      price: 68000, from: true, unit: 'за комплект',
+      card: { name: 'Кованые диски R19', text: 'Тёмная бронза, сатиновый лак. Подбор по разболтовке и вылету, шиномонтаж и балансировка — уже в цене.', unit: 'комплект' },
+      meshes: ['rim_fl', 'rim_fr', 'rim_rl', 'rim_rr', 'wheel*'],   // rim_* — обод, wheel* — спицы
+      stock: { color: '#d3d5d8', metalness: 1, roughness: 0.2 },
+      tuned: { color: '#5e4329', metalness: 1, roughness: 0.3 },
+      anchor: [0.99, 0.36, -1.154], normal: [1, 0, -0.25], followsBody: false,
+    },
+    {
+      id: 'body', tag: 'Плёнка',
+      title: 'Графит<br>с перламутром',
+      lead: 'Меняем цвет и заодно защищаем заводской лак от сколов и песка.',
+      price: 145000, from: true, unit: 'оклейка кузова',
+      card: { name: 'Плёнка «Графит перламутр»', text: 'Литой винил с гарантией 5 лет. Снимается без следа — заводской лак под ним остаётся как новый.', unit: 'весь кузов' },
+      meshes: ['body'],
+      stock: { color: '#e6e6e3', metalness: 0.1, roughness: 0.3 },
+      tuned: { color: '#3a3f46', metalness: 0.42, roughness: 0.34 },
+      trim:  { stock: '#c9ccd0', tuned: '#17181a' },   // хром-молдинги → «антихром»
+      anchor: [0.95, 0.66, 0.0], normal: [1, 0.15, 0], followsBody: true,
+    },
+    {
+      id: 'glass', tag: 'Тонировка',
+      title: 'Атермальная<br>тонировка',
+      lead: 'Салон не греется и не выгорает. Передние стёкла — по техрегламенту.',
+      price: 9500, from: true, unit: 'задняя полусфера',
+      card: { name: 'Атермальная тонировка', text: 'Задняя полусфера — до 5 %, передние — в рамках техрегламента (светопропускание от 70 %). Срезает до 60 % солнечного тепла.', unit: 'задняя полусфера' },
+      meshes: ['glass'],
+      stock: { color: '#ffffff', opacity: 0.18, reflect: 0.9 },
+      tuned: { color: '#050607', opacity: 0.94, reflect: 0.32 },
+      anchor: [0.38, 1.0, -0.66], normal: [0.35, 0.8, -0.5], followsBody: true,
+    },
+    {
+      id: 'stance', tag: 'Занижение',
+      title: 'Минус 35 мм<br>клиренса',
+      lead: 'Ниже центр тяжести, меньше крены — машина «садится» на дорогу.',
+      price: 38000, from: true, unit: 'пружины с установкой',
+      card: { name: 'Занижение −35 мм', text: 'Пружины с занижением и развал-схождение после установки. Подбираем так, чтобы «лежачие» не стали проблемой.', unit: 'с установкой' },
+      meshes: ['tire*'],
+      anchor: [0.97, 0.72, 1.496], normal: [1, 0, 0.2], followsBody: true,
+    },
+  ],
+};
+
+/* Таймлайн: доли общего прокрута сцены (0 → 1). */
+const TL = {
+  hero:  [0.0, 0.075],
+  steps: [
+    { show: [0.095, 0.30], morph: [0.125, 0.225] },
+    { show: [0.315, 0.50], morph: [0.345, 0.47]  },
+    { show: [0.515, 0.665], morph: [0.545, 0.625] },
+    { show: [0.68, 0.84], morph: [0.71, 0.79]   },
+  ],
+  final: [0.875, 1.0],
+  hots:  [0.895, 0.945],
+};
+
+/* Камера: опорные точки (pos — где стоит, tgt — куда смотрит).
+   sx/sy — сдвиг кадра (доля экрана) на десктопе, my — вертикальный сдвиг и mr — множитель дистанции на вертикальном экране,
+   pass — камера проходит точку без остановки. */
+const CAM = [
+  { p: 0.000, pos: [6.0, 1.55, -6.6], tgt: [0, 0.5, 0],          fov: 30, sx: 0.3,  sy: -0.06, my: -0.14, mr: 0.93 },
+  { p: 0.070, pos: [5.0, 1.30, -5.4], tgt: [0, 0.5, 0],          fov: 30, sx: 0.26, sy: -0.04, my: -0.08, mr: 1.2 },
+  { p: 0.200, pos: [2.95, 0.6, 0.1],    tgt: [0.85, 0.40, 1.45],  fov: 30, sx: 0.22, sy: 0.02, my: 0.22 },
+  { p: 0.295, pos: [3.1, 0.78, 0.35],   tgt: [0.85, 0.42, 1.45],  fov: 30, sx: 0.22, sy: 0.02, my: 0.22 },
+  { p: 0.385, pos: [4.9, 1.65, 4.3],    tgt: [0, 0.5, 0.3],       fov: 30, sx: 0.2,  sy: 0.0,  my: 0.2, pass: true },
+  { p: 0.495, pos: [8.2, 1.3, 0.5],     tgt: [0, 0.5, 0.05],      fov: 30, sx: 0.28, sy: 0.0,  my: 0.13, mr: 1.07 },
+  { p: 0.590, pos: [4.4, 1.7, -4.1],    tgt: [0.15, 0.8, -0.35],  fov: 30, sx: 0.2,  sy: 0.0,  my: 0.2 },
+  { p: 0.665, pos: [4.15, 1.62, -4.35], tgt: [0.15, 0.8, -0.35],  fov: 30, sx: 0.2,  sy: 0.0,  my: 0.2 },
+  { p: 0.765, pos: [3.5, 0.24, -1.55],  tgt: [0.5, 0.42, -0.45],  fov: 34, sx: 0.2,  sy: 0.04, my: 0.2, mr: 1.3 },
+  { p: 0.840, pos: [3.6, 0.28, -1.15],  tgt: [0.5, 0.42, -0.35],  fov: 34, sx: 0.2,  sy: 0.04, my: 0.2, mr: 1.3 },
+  { p: 0.945, pos: [5.35, 1.0, -4.85],  tgt: [0, 0.42, 0],        fov: 30, sx: 0.2,  sy: 0.0,  my: 0.24, mr: 1.06 },
+  { p: 1.000, pos: [5.35, 1.0, -4.85],  tgt: [0, 0.42, 0],        fov: 30, sx: 0.2,  sy: 0.0,  my: 0.24, mr: 1.06 },
+];
+
+/* ===================================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp  = (a, b, t) => a + (b - a) * t;
+const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const ease  = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const money = n => new Intl.NumberFormat('ru-RU').format(n).replace(/\s/g, ' ') + ' ₽';
+const pad2  = n => String(n).padStart(2, '0');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const N = CONFIG.parts.length;
+const TOTAL = CONFIG.parts.reduce((s, p) => s + p.price, 0);
+
+/* ---------- сборка интерфейса из конфига ---------- */
+const garage = $('#garage'), stage = $('#stage');
+const capsEl = $('#caps'), hotsEl = $('#hots'), navEl = $('#nav');
+const caps = [], hots = [], navBtns = [];
+
+CONFIG.parts.forEach((p, i) => {
+  const c = document.createElement('article');
+  c.className = 'cap';
+  c.innerHTML = `
+    <div class="cap-k"><b>${pad2(i + 1)}</b><span>/ ${pad2(N)}</span><i></i><em>${p.tag}</em></div>
+    <h2 class="cap-t">${p.title.replace(/<br>/g, ' <br>')}</h2>
+    <p class="cap-d">${p.lead}</p>
+    <div class="cap-p"><span class="from">${p.from ? 'от' : ''}</span><strong>${money(p.price)}</strong><small>${p.unit} · пример</small></div>
+    <div class="cap-bar">${CONFIG.parts.map((_, j) => `<span class="${j <= i ? 'on' : ''}"></span>`).join('')}</div>`;
+  capsEl.appendChild(c); caps.push(c);
+
+  const h = document.createElement('button');
+  h.type = 'button'; h.className = 'hot'; h.dataset.id = p.id;
+  h.setAttribute('aria-label', `${p.card.name} — ${money(p.price)}`);
+  h.innerHTML = `<span class="hot-ring"></span><span class="hot-core"></span><span class="hot-label">${p.tag}<em>${p.from ? 'от ' : ''}${money(p.price)}</em></span>`;
+  hotsEl.appendChild(h); hots.push(h);
+
+  const nb = document.createElement('button');
+  nb.type = 'button'; nb.textContent = p.tag;
+  nb.addEventListener('click', () => scrollToP((TL.steps[i].morph[1] + TL.steps[i].show[1]) / 2 - 0.01));
+  navEl.appendChild(nb); navBtns.push(nb);
+});
+
+const capFinal = document.createElement('article');
+capFinal.className = 'cap';
+capFinal.innerHTML = `
+  <div class="cap-k"><b>${pad2(N)}</b><span>/ ${pad2(N)}</span><i></i><em>Собрано</em></div>
+  <h2 class="cap-t">Готово. <br>Жмите на точки</h2>
+  <p class="cap-d">На каждой — деталь, цена и кнопка заказа.</p>
+  <div class="cap-p"><span class="from">вся сборка</span><strong>${money(TOTAL)}</strong><small>пример</small></div>
+  <div class="cap-bar">${CONFIG.parts.map(() => '<span class="on"></span>').join('')}</div>
+  <button class="btn" type="button" data-order="all">Заказать сборку</button>`;
+capsEl.appendChild(capFinal);
+
+/* ---------- прокрутка ---------- */
+const scrollSpan = () => Math.max(1, garage.offsetHeight - stage.offsetHeight);
+const readProgress = () => clamp(-garage.getBoundingClientRect().top / scrollSpan());
+function scrollToP(p, smooth = !reduced) {
+  window.scrollTo({ top: garage.offsetTop + p * scrollSpan(), behavior: smooth ? 'smooth' : 'auto' });
+}
+$('#to-top').addEventListener('click', () => scrollToP(0));
+$('.logo').addEventListener('click', e => { e.preventDefault(); scrollToP(0); });
+
+/* ---------- HUD по прогрессу ---------- */
+const heroEl = $('#hero'), hintEl = $('#hint'), measureEl = $('#measure'), measureTxt = $('#measure span');
+const setVis = (el, o, y) => {
+  if (el._o !== o) { el.style.opacity = o.toFixed(3); el.style.setProperty('--o', o.toFixed(3)); el._o = o; }
+  const ty = y.toFixed(1);
+  if (el._y !== ty) { el.style.transform = `translate3d(0,${ty}px,0)`; el._y = ty; }
+};
+let activeStep = -1, capHide = 0;
+function updateHUD(s) {
+  const ho = 1 - sstep(TL.hero[1] - 0.05, TL.hero[1], s);
+  setVis(heroEl, ho, -(1 - ho) * 30);
+  hintEl.style.opacity = (1 - sstep(0.005, 0.04, s)).toFixed(3);
+  heroEl.style.pointerEvents = ho > .5 ? 'auto' : 'none';
+
+  let act = -1;
+  TL.steps.forEach((st, i) => {
+    const a = sstep(st.show[0], st.show[0] + 0.03, s), b = sstep(st.show[1] - 0.03, st.show[1], s);
+    const o = a * (1 - b);
+    setVis(caps[i], o, (1 - a) * 26 - b * 26);
+    caps[i].classList.toggle('live', o > .6);
+    const fill = caps[i].querySelector('.cap-bar span:nth-child(' + (i + 1) + ')');
+    fill.style.opacity = (0.35 + 0.65 * sstep(st.morph[0], st.morph[1], s)).toFixed(3);
+    const next = TL.steps[i + 1] ? TL.steps[i + 1].show[0] : TL.final[0];
+    if (s >= st.show[0] && s < next) act = i;
+  });
+  if (s >= TL.final[0]) act = N;
+  if (s < TL.steps[0].show[0]) act = -1;
+  capHide += ((openId ? 1 : 0) - capHide) * 0.18;
+  const fa = sstep(TL.final[0], TL.final[0] + 0.03, s) * (1 - capHide);
+  setVis(capFinal, fa, (1 - fa) * 26);
+  capFinal.classList.toggle('live', fa > .6);
+
+  if (act !== activeStep) {
+    activeStep = act;
+    navBtns.forEach((b, i) => b.classList.toggle('on', i === act));
+  }
+}
+
+/* ---------- карточка и модалка ---------- */
+const card = $('#card'), modal = $('#modal');
+let openId = null, pinned = false, closeTimer = 0, hoverId = null;
+const partById = id => CONFIG.parts.find(p => p.id === id);
+function openCard(id, pin = false) {
+  clearTimeout(closeTimer);
+  const p = partById(id); if (!p) return;
+  const i = CONFIG.parts.indexOf(p);
+  $('#card-k').textContent = `${pad2(i + 1)} · ${p.tag}`;
+  $('#card-t').textContent = p.card.name;
+  $('#card-d').textContent = p.card.text;
+  $('#card-p').innerHTML = `${p.from ? '<span style="font-size:.6em;opacity:.6">от </span>' : ''}${money(p.price)}<small>${p.card.unit} · пример</small>`;
+  openId = id; pinned = pin || pinned;
+  hots.forEach(h => h.classList.toggle('on', h.dataset.id === id));
+  card.classList.add('open');
+  placeCard();
+}
+function closeCard() {
+  openId = null; pinned = false;
+  hots.forEach(h => h.classList.remove('on'));
+  card.classList.remove('open');
+}
+const laterClose = () => { clearTimeout(closeTimer); if (!pinned) closeTimer = setTimeout(closeCard, 380); };
+const isSheet = () => matchMedia('(max-width:900px), (orientation:portrait)').matches;
+const hotPos = {};               // экранные координаты хотспотов (заполняет 3D-цикл)
+function placeCard() {
+  if (!openId || isSheet()) { card.style.left = card.style.top = ''; return; }
+  const hp = hotPos[openId]; if (!hp) return;
+  const W = stage.clientWidth, H = stage.clientHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+  let x = hp.x > W * 0.55 ? hp.x - cw - 34 : hp.x + 34;
+  let y = hp.y - ch * 0.5;
+  x = clamp(x, 16, W - cw - 16); y = clamp(y, 80, H - ch - 16);
+  card.style.left = x + 'px'; card.style.top = y + 'px';
+}
+hots.forEach(h => {
+  const id = h.dataset.id;
+  h.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { hoverId = id; openCard(id); } });
+  h.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { hoverId = null; laterClose(); } });
+  h.addEventListener('focus', () => openCard(id));
+  h.addEventListener('click', e => { e.stopPropagation(); if (openId === id && pinned) closeCard(); else { pinned = false; openCard(id, true); } });
+});
+card.addEventListener('pointerenter', () => clearTimeout(closeTimer));
+card.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') laterClose(); });
+card.addEventListener('click', e => e.stopPropagation());
+$('.card-x', card).addEventListener('click', closeCard);
+$('#card-order').addEventListener('click', () => openModal(openId));
+stage.addEventListener('click', () => { if (openId) closeCard(); });
+
+const fName = $('#f-name'), fTel = $('#f-tel');
+let lastFocus = null;
+function openModal(what) {
+  lastFocus = document.activeElement;
+  const p = partById(what);
+  if (p) { $('#modal-t').textContent = p.card.name; $('#modal-sub').textContent = `${p.from ? 'от ' : ''}${money(p.price)} · ${p.card.unit} · цена — пример`; }
+  else if (what === 'all') { $('#modal-t').textContent = 'Вся сборка'; $('#modal-sub').textContent = `${CONFIG.parts.map(x => x.tag.toLowerCase()).join(', ')} — от ${money(TOTAL)} · пример`; }
+  else { $('#modal-t').textContent = 'Запись в ателье'; $('#modal-sub').textContent = 'Перезвоним, уточним машину и подберём детали.'; }
+  modal.classList.remove('sent');
+  modal.classList.add('open');
+  document.documentElement.classList.add('lock');
+  setTimeout(() => fName.focus({ preventScroll: true }), 60);
+}
+function closeModal() {
+  modal.classList.remove('open');
+  document.documentElement.classList.remove('lock');
+  lastFocus && lastFocus.focus && lastFocus.focus({ preventScroll: true });
+}
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-order]'); if (o) { e.stopPropagation(); openModal(o.dataset.order); }
+  if (e.target.closest('[data-close]')) closeModal();
+});
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (modal.classList.contains('open')) closeModal(); else closeCard(); } });
+fTel.addEventListener('input', () => {
+  let d = fTel.value.replace(/\D/g, ''); if (!d) { fTel.value = ''; return; }
+  if (d[0] === '8') d = '7' + d.slice(1); if (d[0] !== '7') d = '7' + d; d = d.slice(0, 11);
+  const r = d.slice(1); let out = '+7';
+  if (r.length) out += ' ' + r.slice(0, 3); if (r.length > 3) out += ' ' + r.slice(3, 6);
+  if (r.length > 6) out += '-' + r.slice(6, 8); if (r.length > 8) out += '-' + r.slice(8, 10);
+  fTel.value = out; fTel.classList.remove('bad');
+});
+fName.addEventListener('input', () => fName.classList.remove('bad'));
+$('#form').addEventListener('submit', e => {
+  e.preventDefault();
+  const okN = fName.value.trim().length >= 2, okT = fTel.value.replace(/\D/g, '').length === 11;
+  fName.classList.toggle('bad', !okN); fTel.classList.toggle('bad', !okT);
+  if (!okN) return fName.focus(); if (!okT) return fTel.focus();
+  modal.classList.add('sent');   // демо: ничего не отправляем
+});
+
+/* ---------- появление блоков ниже ---------- */
+const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .18 });
+document.querySelectorAll('.b').forEach((b, i) => { b.style.transitionDelay = (i % 3) * 80 + 'ms'; io.observe(b); });
+
+/* ---------- загрузка / ошибки ---------- */
+const loader = $('#loader'), loaderBar = $('#loader-bar'), loaderPct = $('#loader-pct'), loaderMsg = $('#loader-msg');
+const setLoad = (f, msg) => { f = clamp(f); loaderBar.style.transform = `scaleX(${f.toFixed(3)})`; loaderPct.textContent = Math.round(f * 100) + ' %'; if (msg) loaderMsg.textContent = msg; };
+function finishLoader() { loader.classList.add('done'); document.body.classList.add('ready'); }
+function fallback(kind) {
+  const fb = $('#fallback');
+  if (kind === 'net') {
+    $('#fb-t').textContent = 'Не удалось загрузить 3D-модель';
+    $('#fb-d').textContent = 'Похоже, сеть оборвалась или CDN недоступен. Подписи и цены работают — а 3D появится после обновления страницы.';
+    $('#fb-retry').hidden = false;
+  } else if (kind === 'lost') {
+    $('#fb-t').textContent = 'Видеокарта сбросила 3D-сцену';
+    $('#fb-d').textContent = 'Так бывает при нехватке памяти на телефоне. Обновите страницу — сцена загрузится заново.';
+    $('#fb-retry').hidden = false;
+  }
+  fb.classList.add('show');
+  canvasEl.style.display = 'none';
+  finishLoader();
+}
+$('#fb-retry').addEventListener('click', () => location.reload());
+const canvasEl = $('#gl');
+
+/* ---------- главный цикл ---------- */
+let sCur = 0, last = performance.now(), visible = true, three = null;
+new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { rootMargin: '10% 0px' }).observe(garage);
+document.addEventListener('visibilitychange', () => { last = performance.now(); });
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden) return;
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!visible) return;
+  const p = readProgress();
+  sCur = reduced ? p : sCur + (p - sCur) * (1 - Math.exp(-dt * 6.5));
+  if (Math.abs(p - sCur) < 0.00005) sCur = p;
+  updateHUD(sCur);
+  if (three) three.update(sCur, dt, now / 1000, p);
+}
+requestAnimationFrame(frame);
+
+/* для проверки и навигации: TUNELAB.jump(0.5) — сразу на нужную точку таймлайна */
+window.TUNELAB = {
+  jump(p) { scrollToP(p, false); sCur = p; },
+  open: id => openCard(id, true),
+  info: () => three ? three.info() : null,
+};
+
+/* =====================================================================
+   3D
+   ===================================================================== */
+function webglOK() {
+  try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  catch (e) { return false; }
+}
+
+async function init3D() {
+  if (!webglOK()) { fallback('nowebgl'); return; }
+  setLoad(0.04, 'Готовим бокс');
+  let THREE, GLTFLoader, DRACOLoader;
+  try {
+    THREE = await import('three');
+    ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+    ({ DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js'));
+  } catch (e) { console.error(e); fallback('net'); return; }
+  setLoad(0.1, 'Выкатываем машину');
+
+  const mobile = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) { console.error(e); fallback('nowebgl'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.75 : 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.setClearColor(0x000000, 0);
+  canvasEl.addEventListener('webglcontextlost', e => { e.preventDefault(); fallback('lost'); });
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 80);
+
+  /* студийное окружение: тёмный бокс + софтбоксы-полосы (дают «дорогие» блики на лаке) */
+  {
+    const env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(30, 32, 16), new THREE.MeshBasicMaterial({ color: 0x151517, side: THREE.BackSide })));
+    const plane = new THREE.PlaneGeometry(1, 1);
+    const L = (w, h, hex, k, pos, look) => {
+      const m = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({ color: new THREE.Color(hex).multiplyScalar(k), side: THREE.DoubleSide }));
+      m.scale.set(w, h, 1); m.position.set(...pos); m.lookAt(...look); env.add(m);
+    };
+    L(9.0, 4.0, 0xffffff, 3.4, [0, 7.5, 0], [0, 0, 0]);          // большой верхний софтбокс
+    L(16, 1.1, 0xffffff, 7.0, [7.5, 2.2, 0], [0, 2.2, 0]);        // длинная полоса справа
+    L(16, 0.5, 0xffffff, 5.0, [7.5, 4.4, 0], [0, 1.4, 0]);
+    L(16, 1.1, 0xffffff, 5.0, [-7.5, 2.2, 0], [0, 2.2, 0]);       // и слева
+    L(6, 4, 0xffffff, 2.2, [0, 3, -9], [0, 1, 0]);                // фронт
+    L(6, 4, 0xffffff, 1.4, [0, 3, 9], [0, 1, 0]);                 // корма
+    L(8, 1.2, 0xffd6b8, 1.4, [-6, 1.2, 6], [0, 0.6, 0]);          // тёплый контровой
+    L(40, 40, 0x26262a, 1.0, [0, -0.5, 0], [0, 1, 0]);            // пол-отражатель
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(env, 0.04).texture;
+    pm.dispose();
+  }
+
+  /* фресnel-подсветка + проход блика — патч стандартных материалов (без перекомпиляции во время скролла) */
+  const hlColor = new THREE.Color(0xff5a1f);
+  const resU = { value: new THREE.Vector2(1, 1) };
+  function patch(mat, base = 0.12, pow = 2.2) {
+    const u = { uHl: { value: 0 }, uHlBase: { value: base }, uHlPow: { value: pow }, uSweep: { value: -1 }, uSweepAmt: { value: 0 } };
+    mat.userData.u = u;
+    mat.onBeforeCompile = sh => {
+      sh.uniforms.uHl = u.uHl; sh.uniforms.uHlBase = u.uHlBase; sh.uniforms.uHlPow = u.uHlPow; sh.uniforms.uSweep = u.uSweep; sh.uniforms.uSweepAmt = u.uSweepAmt;
+      sh.uniforms.uHlColor = { value: hlColor }; sh.uniforms.uRes = resU;
+      sh.fragmentShader = 'uniform float uHl; uniform float uHlBase; uniform float uHlPow; uniform float uSweep; uniform float uSweepAmt; uniform vec3 uHlColor; uniform vec2 uRes;\n' +
+        sh.fragmentShader.replace('#include <opaque_fragment>', `
+          float hlF = pow(1.0 - clamp(abs(dot(normal, normalize(vViewPosition))), 0.0, 1.0), uHlPow);
+          outgoingLight += uHlColor * uHl * (uHlBase + 1.9 * hlF);
+          float swX = (gl_FragCoord.x + gl_FragCoord.y * 0.45) / uRes.x;
+          float sw = exp(-pow((swX - uSweep) * 17.0, 2.0));
+          outgoingLight += vec3(1.0, 0.9, 0.78) * sw * uSweepAmt * (0.25 + 2.0 * hlF);
+          #include <opaque_fragment>`);
+    };
+    return mat;
+  }
+
+  const P = Object.fromEntries(CONFIG.parts.map(p => [p.id, p]));
+  const C = h => new THREE.Color(h);
+  const bodyMat = patch(new THREE.MeshPhysicalMaterial({
+    color: C(P.body.stock.color), metalness: P.body.stock.metalness, roughness: P.body.stock.roughness,
+    clearcoat: 1, clearcoatRoughness: 0.035, iridescence: 0.001, iridescenceIOR: 1.7, iridescenceThicknessRange: [180, 640],
+  }), 0.0, 4.0);
+  const rimMat  = patch(new THREE.MeshStandardMaterial({ color: C(P.rims.stock.color), metalness: P.rims.stock.metalness, roughness: P.rims.stock.roughness }));
+  const trimMat = new THREE.MeshStandardMaterial({ color: C(P.body.trim.stock), metalness: 1, roughness: 0.22 });
+  const glassMat = patch(new THREE.MeshPhysicalMaterial({ color: C(P.glass.stock.color), metalness: 0, roughness: 0.02, transparent: true, opacity: P.glass.stock.opacity, depthWrite: false, envMapIntensity: P.glass.stock.reflect }));
+  let tireMat = null;
+  const cols = {
+    rimA: C(P.rims.stock.color), rimB: C(P.rims.tuned.color),
+    bodyA: C(P.body.stock.color), bodyB: C(P.body.tuned.color),
+    trimA: C(P.body.trim.stock), trimB: C(P.body.trim.tuned),
+    glassA: C(P.glass.stock.color), glassB: C(P.glass.tuned.color),
+  };
+
+  /* загрузка модели */
+  const draco = new DRACOLoader().setDecoderPath(CONFIG.model.draco);
+  const loader = new GLTFLoader().setDRACOLoader(draco);
+  let gltf;
+  try {
+    gltf = await new Promise((res, rej) => loader.load(CONFIG.model.url, res, ev => {
+      const tot = ev.lengthComputable && ev.total ? ev.total : CONFIG.model.bytes;
+      setLoad(0.12 + 0.78 * clamp(ev.loaded / tot), 'Выкатываем машину');
+    }, rej));
+  } catch (e) { console.error(e); fallback('net'); return; }
+  setLoad(0.93, 'Ставим свет');
+
+  const car = gltf.scene.children[0];
+  const meshNames = [];
+  car.traverse(o => { if (o.isMesh) meshNames.push(o.name); });
+  console.info('[TUNE·LAB] меши модели (' + meshNames.length + '):', meshNames.join(', '));
+
+  const byName = n => car.getObjectByName(n);
+  const groups = { rims: [], body: [], glass: [], stance: [] };
+  const meshesFor = pat => {
+    const out = [];
+    if (pat.endsWith('*')) { const pre = pat.slice(0, -1); car.traverse(o => { if (o.isMesh && o.name.startsWith(pre)) out.push(o); }); }
+    else { const o = byName(pat); if (o) o.isMesh ? out.push(o) : o.traverse(m => m.isMesh && out.push(m)); else console.warn('[TUNE·LAB] нет меша', pat); }
+    return out;
+  };
+  meshesFor('body').forEach(m => { m.material = bodyMat; groups.body.push(m); });
+  P.rims.meshes.flatMap(meshesFor).forEach(m => { m.material = rimMat; groups.rims.push(m); });
+  meshesFor('trim').forEach(m => m.material = trimMat);
+  P.glass.meshes.flatMap(meshesFor).forEach(m => { m.material = glassMat; m.renderOrder = 3; groups.glass.push(m); });
+  P.stance.meshes.flatMap(meshesFor).forEach(m => {
+    if (!tireMat) tireMat = patch(m.material.clone());
+    m.material = tireMat; groups.stance.push(m);
+  });
+  const partMats = { rims: rimMat, body: bodyMat, glass: glassMat, stance: tireMat };
+
+  // фирменные шильды модели гасим в нейтральный графит — на демо не нужен чужой бренд
+  const badgeMat = new THREE.MeshStandardMaterial({ color: 0x2b2c2f, metalness: 0.9, roughness: 0.35 });
+  CONFIG.model.neutral.flatMap(meshesFor).forEach(m => m.material = badgeMat);
+
+  const main = byName('main') || car;          // кузов со стёклами и салоном; колёса — отдельно
+  const mainY0 = main.position.y;
+
+  /* пол: мягкое пятно света + AO-тень модели */
+  const radialTex = stops => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(256, 256, 0, 256, 256, 256);
+    stops.forEach(([o, c]) => gr.addColorStop(o, c)); g.fillStyle = gr; g.fillRect(0, 0, 512, 512);
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+  };
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(10, 72), new THREE.MeshBasicMaterial({
+    map: radialTex(mobile
+      ? [[0, 'rgba(62,62,68,1)'], [0.2, 'rgba(40,40,44,1)'], [0.45, 'rgba(22,22,25,.85)'], [0.75, 'rgba(14,14,16,.35)'], [1, 'rgba(12,12,13,0)']]
+      : [[0, 'rgba(58,58,64,.8)'], [0.2, 'rgba(38,38,42,.88)'], [0.45, 'rgba(22,22,25,.9)'], [0.75, 'rgba(14,14,16,.4)'], [1, 'rgba(12,12,13,0)']]),
+    transparent: true, depthWrite: false, toneMapped: false,
+  }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.002; floor.renderOrder = 1;
+  scene.add(floor);
+  const ao = new THREE.Mesh(new THREE.PlaneGeometry(0.655 * 4, 1.3 * 4), new THREE.MeshBasicMaterial({
+    map: await new THREE.TextureLoader().loadAsync(CONFIG.model.ao).catch(() => null),
+    blending: THREE.MultiplyBlending, toneMapped: false, transparent: true, depthWrite: false,
+  }));
+  ao.rotation.x = -Math.PI / 2; ao.renderOrder = 2;
+  if (ao.material.map) car.add(ao);
+  scene.add(car);
+  // «мокрый» пол студии: зеркальная копия машины под полупрозрачным полом (только десктоп)
+  let mirrorMain = null;
+  if (!mobile) {
+    const mirror = car.clone();
+    mirror.scale.y = -1;
+    mirror.traverse(o => { if (o === ao || o.material === ao.material) o.visible = false; });
+    mirrorMain = mirror.getObjectByName('main');
+    scene.add(mirror);
+  }
+
+  /* якоря хотспотов */
+  const anchors = CONFIG.parts.map(p => ({ id: p.id, base: new THREE.Vector3(...p.anchor), n: new THREE.Vector3(...p.normal).normalize(), follow: p.followsBody, w: new THREE.Vector3() }));
+  const measureAnchor = { base: new THREE.Vector3(0.98, 0.74, -1.154), w: new THREE.Vector3() };
+
+  /* камера: ключи → сферические координаты вокруг цели */
+  const keys = CAM.map(k => {
+    const tgt = new THREE.Vector3(...k.tgt), off = new THREE.Vector3(...k.pos).sub(tgt);
+    return { ...k, tgt, sph: new THREE.Spherical().setFromVector3(off) };
+  });
+  const tmpT = new THREE.Vector3(), tmpS = new THREE.Spherical(), tmpV = new THREE.Vector3(), camDir = new THREE.Vector3();
+  let W = 1, H = 1, portrait = false, fitK = 1;
+  function resize() {
+    W = stage.clientWidth; H = stage.clientHeight;
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    portrait = W <= 900 || H >= W;
+    fitK = W / H >= 1.45 ? 1 : clamp(Math.pow(1.45 / (W / H), 0.7), 1, 2.4);
+    const db = renderer.getDrawingBufferSize(new THREE.Vector2());
+    resU.value.set(db.x, db.y);
+    dirty = true;
+  }
+  let dirty = true;
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  let swayT = 0, swayAmt = 0, intro = 1, hlState = { rims: 0, body: 0, glass: 0, stance: 0 };
+  function placeCamera(s, dt) {
+    let i = 0; while (i < keys.length - 2 && s > keys[i + 1].p) i++;
+    const a = keys[i], b = keys[i + 1];
+    // ключи с pass:true камера проходит без остановки — облёт остаётся одним движением
+    const u = clamp((s - a.p) / (b.p - a.p));
+    const t = a.pass && b.pass ? u : a.pass ? 1 - (1 - u) * (1 - u) : b.pass ? u * u : ease(u);
+    tmpT.lerpVectors(a.tgt, b.tgt, t);
+    let dth = b.sph.theta - a.sph.theta; if (dth > Math.PI) dth -= 2 * Math.PI; if (dth < -Math.PI) dth += 2 * Math.PI;
+    tmpS.radius = lerp(a.sph.radius, b.sph.radius, t) * fitK * (portrait ? lerp(a.mr || 1, b.mr || 1, t) : 1) * (1 + intro * 0.18);
+    tmpS.phi = lerp(a.sph.phi, b.sph.phi, t);
+    tmpS.theta = a.sph.theta + dth * t + intro * 0.35;
+    // финал: медленное покачивание вокруг машины (пауза, когда открыта карточка)
+    const swayOn = !reduced && s > 0.955 && !openId && !hoverId;
+    swayAmt += ((swayOn ? 1 : 0) - swayAmt) * (1 - Math.exp(-dt * 1.5));
+    swayT += dt * swayAmt;
+    tmpS.theta += Math.sin(swayT * 0.32) * 0.2 * sstep(0.95, 1, s);
+    camera.position.setFromSpherical(tmpS).add(tmpT);
+    camera.lookAt(tmpT);
+    camera.fov = lerp(a.fov, b.fov, t);
+    camera.updateProjectionMatrix();
+    const sx = portrait ? 0 : lerp(a.sx, b.sx, t) * (1 - intro * 0.4);
+    const sy = portrait ? lerp(a.my, b.my, t) : lerp(a.sy, b.sy, t);
+    camera.projectionMatrix.elements[8] = -sx;
+    camera.projectionMatrix.elements[9] = -sy;
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+    camera.updateMatrixWorld();
+  }
+
+  function project(v3, out) {
+    tmpV.copy(v3).project(camera);
+    out.x = (tmpV.x + 1) * 0.5 * W; out.y = (1 - tmpV.y) * 0.5 * H; out.z = tmpV.z;
+    return out;
+  }
+
+  let lastS = -1, introDone = false, sweeping = false;
+  /* блик-проход: короткое событие по времени, когда этап переключается (не зависит от того, где остановился скролл) */
+  const sweeps = { rims: { t: 1, prev: null }, body: { t: 1, prev: null } };
+  function runSweep(sw, v, mat, dt, amp, reverse) {
+    if (sw.prev !== null && (sw.prev < 0.5) !== (v < 0.5) && !reduced) sw.t = 0;
+    sw.prev = v;
+    if (sw.t < 1) { sw.t = Math.min(1, sw.t + dt / 0.95); sweeping = true; }
+    const k = reverse ? 1 - sw.t : sw.t;
+    mat.userData.u.uSweep.value = lerp(-0.2, 1.3, k);
+    mat.userData.u.uSweepAmt.value = Math.sin(Math.PI * sw.t) * amp;
+  }
+  const pt = { x: 0, y: 0, z: 0 };
+  function update(s, dt, time) {
+    sweeping = false;
+    if (!introDone) { intro = Math.max(0, intro - dt / 1.8); if (intro <= 0) introDone = true; }
+    const introE = intro * intro * (3 - 2 * intro);
+    const savedIntro = intro; intro = introE;
+
+    const st = TL.steps;
+    const t1 = sstep(st[0].morph[0], st[0].morph[1], s);
+    const t2 = sstep(st[1].morph[0], st[1].morph[1], s);
+    const t3 = sstep(st[2].morph[0], st[2].morph[1], s);
+    const t4 = sstep(st[3].morph[0], st[3].morph[1], s);
+
+    // диски: серебро → тёмная бронза + проход блика
+    rimMat.color.lerpColors(cols.rimA, cols.rimB, t1);
+    rimMat.roughness = lerp(P.rims.stock.roughness, P.rims.tuned.roughness, t1);
+    runSweep(sweeps.rims, t1, rimMat, dt, 0.75, false);
+    // кузов: перламутровый перелив → графит
+    bodyMat.color.lerpColors(cols.bodyA, cols.bodyB, t2);
+    bodyMat.metalness = lerp(P.body.stock.metalness, P.body.tuned.metalness, t2);
+    bodyMat.roughness = lerp(P.body.stock.roughness, P.body.tuned.roughness, t2);
+    bodyMat.iridescence = 0.001 + Math.sin(Math.PI * t2) * 0.95 + t2 * 0.22;
+    runSweep(sweeps.body, t2, bodyMat, dt, 0.45, true);
+    trimMat.color.lerpColors(cols.trimA, cols.trimB, t2);
+    // тонировка
+    glassMat.color.lerpColors(cols.glassA, cols.glassB, t3);
+    glassMat.opacity = lerp(P.glass.stock.opacity, P.glass.tuned.opacity, t3);
+    glassMat.envMapIntensity = lerp(P.glass.stock.reflect, P.glass.tuned.reflect, t3);
+    // занижение: двигаем кузов, колёса на месте
+    const drop = t4 * CONFIG.lowerMm / 1000;
+    main.position.y = mainY0 - drop;
+    if (mirrorMain) mirrorMain.position.y = mainY0 - drop;
+
+    placeCamera(s, dt);
+    intro = savedIntro;
+
+    // подсветка деталей
+    const fin = sstep(TL.hots[0], TL.hots[1], s);
+    const focus = hoverId || openId;
+    let hlActive = false;
+    for (const id in hlState) {
+      const target = (focus === id && fin > 0.5) ? 1 : 0;
+      hlState[id] += (target - hlState[id]) * (1 - Math.exp(-dt * 8));
+      if (hlState[id] < 0.002) hlState[id] = 0;
+      if (hlState[id] > 0) hlActive = true;
+      const pulse = reduced ? 0.8 : 0.62 + 0.38 * Math.sin(time * 4.2);
+      const m = partMats[id]; if (m) m.userData.u.uHl.value = hlState[id] * pulse * (id === 'body' ? 0.4 : 1);
+    }
+
+    // хотспоты: проекция каждый кадр, скрываем те, что смотрят от камеры
+    hotsEl.style.opacity = fin.toFixed(3);
+    hotsEl.classList.toggle('live', fin > 0.6);
+    if (fin > 0.001) {
+      camDir.copy(camera.position);
+      anchors.forEach((a, i) => {
+        a.w.copy(a.base); if (a.follow) a.w.y -= drop;
+        project(a.w, pt);
+        const facing = tmpV.copy(camDir).sub(a.w).normalize().dot(a.n);
+        const vis = pt.z < 1 && facing > 0.05 ? clamp((facing - 0.05) / 0.2) : 0;
+        hotPos[a.id] = { x: pt.x, y: pt.y };
+        const h = hots[i];
+        h.style.transform = `translate3d(${pt.x.toFixed(1)}px,${pt.y.toFixed(1)}px,0)`;
+        h.style.opacity = vis.toFixed(3);
+        h.style.visibility = vis > 0.05 ? 'visible' : 'hidden';
+        h.classList.toggle('left', pt.x > W * 0.62);
+      });
+      if (openId) placeCard();
+    }
+
+    // мерка занижения
+    const mo = sstep(st[3].show[0] + 0.01, st[3].morph[0] + 0.01, s) * (1 - sstep(st[3].show[1] - 0.03, st[3].show[1], s));
+    if (mo > 0.001) {
+      measureAnchor.w.copy(measureAnchor.base); measureAnchor.w.y -= drop;
+      project(measureAnchor.w, pt);
+      const mx = clamp(pt.x, 12, W - (measureEl.offsetWidth || 130) - 12), my = clamp(pt.y - 46, 80, H - 120);
+      measureEl.style.transform = `translate3d(${mx.toFixed(1)}px,${my.toFixed(1)}px,0)`;
+      measureTxt.textContent = `−${Math.round(t4 * CONFIG.lowerMm)} мм`;
+    }
+    measureEl.style.opacity = mo.toFixed(3);
+
+    // рендерим только когда есть что менять
+    const moving = Math.abs(s - lastS) > 1e-6;
+    if (moving || dirty || hlActive || sweeping || swayAmt > 0.001 || !introDone) {
+      renderer.render(scene, camera);
+      dirty = false; lastS = s;
+    }
+  }
+
+  function info() {
+    const r = {};
+    anchors.forEach(a => { project(a.w.copy(a.base), pt); r[a.id] = { x: Math.round(pt.x), y: Math.round(pt.y) }; });
+    const box = n => { const o = byName(n); if (!o) return null; const b = new THREE.Box3().setFromObject(o); return { min: b.min.toArray().map(v => +v.toFixed(3)), max: b.max.toArray().map(v => +v.toFixed(3)) }; };
+    return { meshNames, hot: r, boxes: { body: box('body'), glass: box('glass'), rim_fr: box('rim_fr'), rim_rr: box('rim_rr'), wheel_fr: box('wheel_fr'), main: box('main') }, size: [W, H], dpr: renderer.getPixelRatio() };
+  }
+
+  // первый кадр с прогревом шейдеров, затем убираем загрузку
+  placeCamera(sCur, 0);
+  renderer.compile(scene, camera);
+  renderer.render(scene, camera);
+  setLoad(1, 'Готово');
+  three = { update, info };
+  if (window.__noIntro) { intro = 0; introDone = true; }
+  setTimeout(finishLoader, 180);
+}
+init3D();
+</script>
+</body>
+</html>

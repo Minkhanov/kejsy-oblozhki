@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TUNE·LAB — электропороги и офроуд-тюнинг · демо</title>
+<meta name="description" content="Демо-сцена магазина офроуд-тюнинга: листаете страницу — на фото Jeep выезжает электропорог, загораются колёса, расширители арок и лифт. Цены на каждом шаге.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0b; --bg-2:#111113;
+  --ink:#f3f1ec; --ink-2:rgba(243,241,236,.68); --ink-3:rgba(243,241,236,.42); --ink-4:rgba(243,241,236,.16);
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.14);
+  --acc:#ff5a1f; --acc-2:#ff8a50; --acc-glow:rgba(255,90,31,.45);
+  --bronze:#b48a58;
+  --fd:'Unbounded', 'Arial Black', system-ui, sans-serif;
+  --fb:'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fm:ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+  --ease:cubic-bezier(.2,.7,.1,1);
+  --pad:clamp(18px, 5.5vw, 88px);
+  --safe-b:env(safe-area-inset-bottom, 0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--fb);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"tnum" 0}
+html.lock,html.lock body{overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.nowrap{white-space:nowrap}
+
+/* зерно поверх всего — убирает «пластиковую» плоскость */
+.grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- шапка ---------- */
+.top{position:fixed;inset:0 0 auto 0;z-index:40;height:68px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--pad);
+  background:linear-gradient(180deg,rgba(10,10,11,.82),rgba(10,10,11,0));}
+.logo{font-family:var(--fd);font-weight:600;font-size:15px;letter-spacing:.14em;text-decoration:none;display:flex;align-items:center;gap:.08em}
+.logo i{display:inline-block;width:.42em;height:.42em;background:var(--acc);border-radius:1px;margin:0 .22em;transform:translateY(-.06em)}
+.nav{display:flex;gap:2px;padding:5px;border-radius:999px;background:rgba(14,14,16,.5);border:1px solid var(--line);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.nav button{background:none;border:0;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);padding:9px 16px;transition:color .2s,background .2s}
+.nav button.on{background:rgba(255,255,255,.07)}
+.nav button:hover,.nav button.on{color:var(--ink)}
+.nav button.on::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--acc);margin-right:8px;transform:translateY(-2px)}
+.pill{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line-2);background:rgba(255,255,255,.04);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);font-size:13px;font-weight:600;letter-spacing:.02em;transition:border-color .2s,background .2s,transform .2s var(--ease)}
+.pill:hover{border-color:rgba(255,90,31,.6);background:rgba(255,90,31,.08);transform:translateY(-1px)}
+.pill b{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 12px var(--acc-glow)}
+
+.badge-demo{position:fixed;right:16px;bottom:14px;z-index:45;font-size:10px;font-weight:600;letter-spacing:.22em;color:var(--ink-3);padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(10,10,11,.55);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none;white-space:nowrap}
+
+/* ---------- сцена ---------- */
+.garage{position:relative;height:540vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
+.stage-bg{position:absolute;inset:0;z-index:-2;
+  background:
+    radial-gradient(46% 38% at 58% 30%, rgba(255,255,255,.075), rgba(255,255,255,0) 70%),
+    radial-gradient(36% 46% at 4% 104%, rgba(255,90,31,.13), rgba(255,90,31,0) 70%),
+    radial-gradient(30% 30% at 100% 0%, rgba(180,138,88,.08), rgba(180,138,88,0) 70%),
+    linear-gradient(180deg,#0e0e10 0%,#0a0a0b 58%,#070708 100%)}
+#ph{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.ph-back{position:absolute;inset:-10%;width:120%;height:120%;object-fit:cover;filter:blur(38px) brightness(.38) saturate(1.15);transform:scale(1.1);z-index:-1;opacity:0;transition:opacity .8s}
+.ph-back.on{opacity:1}
+.scrim{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(8,8,9,.86) 0%,rgba(8,8,9,.62) 30%,rgba(8,8,9,.12) 58%,rgba(8,8,9,0) 70%),linear-gradient(0deg,rgba(8,8,9,.55),rgba(8,8,9,0) 30%)}
+.edit-panel{position:absolute;left:12px;top:76px;z-index:30;max-width:min(520px,calc(100% - 24px));padding:12px 14px;border-radius:14px;background:rgba(0,0,0,.78);border:1px solid var(--acc);font:12px/1.5 var(--fm);color:#ffe2d6;white-space:pre-wrap;user-select:text}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(130% 100% at 55% 45%,rgba(0,0,0,0) 58%,rgba(0,0,0,.5) 100%)}
+.hud{position:absolute;inset:0;pointer-events:none}
+.hud > *{pointer-events:auto}
+
+/* первый экран */
+.hero{position:absolute;left:var(--pad);top:clamp(96px,20vh,200px);max-width:min(620px,44vw);will-change:opacity,transform}
+.kicker{display:flex;align-items:center;gap:12px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.kicker::before{content:'';width:28px;height:1px;background:var(--acc)}
+.hero h1{font-family:var(--fd);font-weight:600;font-size:clamp(40px,5.4vw,92px);line-height:.98;letter-spacing:-.035em;margin:22px 0 26px}
+.hero h1 em{font-style:normal;color:var(--acc);text-shadow:0 0 40px rgba(255,90,31,.25)}
+.hero p{font-size:clamp(15px,1.2vw,18px);color:var(--ink-2);max-width:36ch}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.chip{font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--ink-2);padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.025)}
+.hint{position:absolute;left:50%;bottom:calc(26px + var(--safe-b));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:12px;font-size:11px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);pointer-events:none}
+.hint i{position:relative;width:1px;height:46px;background:var(--ink-4);overflow:hidden}
+.hint i::after{content:'';position:absolute;left:0;top:-40%;width:1px;height:40%;background:var(--acc);animation:drip 2s var(--ease) infinite}
+@keyframes drip{0%{top:-40%}100%{top:110%}}
+
+/* подписи этапов */
+.cap{position:absolute;left:calc(var(--pad) - 28px);bottom:clamp(28px,8vh,96px);width:min(500px,42vw);padding:26px 28px 24px;border-radius:26px;opacity:0;pointer-events:none;will-change:opacity,transform;
+  background:linear-gradient(160deg,rgba(30,30,33,.6),rgba(12,12,14,.5));-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 60px -24px rgba(0,0,0,.6)}
+.cap.live{pointer-events:auto}
+.cap-k{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.cap-k b{font-family:var(--fd);font-weight:600;color:var(--acc);letter-spacing:.04em;font-size:13px}
+.cap-k i{flex:0 0 26px;height:1px;background:var(--line-2)}
+.cap-k em{font-style:normal;color:var(--ink)}
+.cap-t{font-family:var(--fd);font-weight:500;font-size:clamp(24px,2.6vw,40px);line-height:1.05;letter-spacing:-.03em;margin:18px 0 16px}
+.cap-d{font-size:clamp(15px,1.15vw,17px);color:var(--ink-2);max-width:36ch}
+.cap-p{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.cap-p .from{font-size:13px;color:var(--ink-3)}
+.cap-p strong{font-family:var(--fd);font-weight:500;font-size:clamp(20px,1.7vw,26px);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cap-p small{font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.cap-bar{display:flex;gap:5px;margin-top:18px}
+/* подпись собирается «лесенкой» синхронно со скроллом этапа */
+.cap-k,.cap-t,.cap-d,.cap-p{transform:translate3d(0,calc((1 - var(--o,1)) * var(--d)),0)}
+.cap-k{--d:6px}.cap-t{--d:16px}.cap-d{--d:26px}.cap-p{--d:36px}
+.cap-bar span{flex:1;height:3px;border-radius:2px;background:var(--ink-4)}
+.cap-bar span.on{background:var(--acc)}
+.cap .btn{margin-top:22px}
+/* финал на десктопе — компактная полоса снизу, чтобы не закрывать машину */
+.cap-final{display:flex;align-items:center;gap:32px;width:auto;max-width:calc(100% - 2 * var(--pad) + 56px);padding:18px 18px 18px 28px;bottom:24px}
+.cap-final .cap-t{font-size:clamp(20px,1.7vw,26px);margin:10px 0 0;white-space:nowrap}
+.cap-final .cap-d,.cap-final .cap-bar{display:none}
+.cap-final .cap-p{margin:0;padding:0 0 0 32px;border-top:0;border-left:1px solid var(--line);flex-direction:column;align-items:flex-start;gap:2px}
+.cap-final .btn{margin:0}
+
+/* хотспоты */
+.hots{position:absolute;inset:0;pointer-events:none;opacity:0}
+.hots.live .hot{pointer-events:auto}
+.hot{position:absolute;left:0;top:0;width:52px;height:52px;margin:-26px 0 0 -26px;border:0;background:none;pointer-events:none;touch-action:manipulation;will-change:transform;outline:none}
+.hot-ring{position:absolute;inset:6px;border-radius:50%;border:1.5px solid rgba(255,90,31,.75);animation:ring 2.6s var(--ease) infinite}
+.hot:nth-child(2) .hot-ring{animation-delay:.5s}.hot:nth-child(3) .hot-ring{animation-delay:1s}.hot:nth-child(4) .hot-ring{animation-delay:1.5s}.hot:nth-child(5) .hot-ring{animation-delay:2s}
+@keyframes ring{0%{transform:scale(.5);opacity:.95}100%{transform:scale(1.45);opacity:0}}
+.hot-core{position:absolute;inset:16px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 5px rgba(255,90,31,.22),0 0 26px rgba(255,90,31,.7);transition:transform .25s var(--ease)}
+.hot-core::after{content:'';position:absolute;inset:6px;border-radius:50%;background:#fff}
+.hot:hover .hot-core,.hot.on .hot-core,.hot:focus-visible .hot-core{transform:scale(1.25)}
+.hot::after{content:'';position:absolute;left:38px;top:50%;width:22px;height:1px;background:linear-gradient(90deg,rgba(255,90,31,.9),rgba(255,255,255,.35));pointer-events:none}
+.hot.left::after{left:auto;right:38px;background:linear-gradient(270deg,rgba(255,90,31,.9),rgba(255,255,255,.35))}
+.hot-label{position:absolute;left:60px;top:50%;transform:translate(0,-50%);white-space:nowrap;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:7px 11px;border-radius:999px;color:var(--ink);
+  background:rgba(12,12,14,.62);border:1px solid var(--line-2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:border-color .2s,background .2s}
+.hot-label em{font-style:normal;color:var(--ink-3);margin-left:8px;letter-spacing:.04em;text-transform:none;font-variant-numeric:tabular-nums}
+.hot.left .hot-label{left:auto;right:60px}
+.hot:hover .hot-label,.hot.on .hot-label{border-color:rgba(255,90,31,.6);background:rgba(28,14,8,.72)}
+
+/* мерка занижения */
+.measure{position:absolute;left:0;top:0;opacity:0;pointer-events:none;will-change:transform,opacity;display:flex;align-items:center;gap:10px}
+.measure i{display:block;width:1px;height:46px;background:linear-gradient(180deg,var(--acc),rgba(255,90,31,0));position:relative}
+.measure i::before{content:'';position:absolute;left:-5px;top:0;width:11px;height:1px;background:var(--acc)}
+.measure span{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;padding:6px 12px;border-radius:12px;background:rgba(12,12,14,.6);border:1px solid rgba(255,90,31,.45);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transform:translateY(-14px)}
+
+/* карточка детали */
+.card{position:absolute;left:0;top:0;width:min(350px,calc(100vw - 24px));padding:22px 22px 20px;border-radius:24px;z-index:5;
+  background:linear-gradient(155deg,rgba(40,40,44,.74),rgba(16,16,18,.66));-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.11);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 30px 70px -18px rgba(0,0,0,.75),0 2px 10px rgba(0,0,0,.35);
+  opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);transition:opacity .22s,transform .32s var(--ease),visibility 0s .32s}
+.card.open{opacity:1;visibility:visible;transform:none;transition:opacity .22s,transform .32s var(--ease),visibility 0s}
+.card-x{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);display:grid;place-items:center;color:var(--ink-2)}
+.card-x:hover{color:var(--ink);border-color:var(--line-2)}
+.card-k{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+.card-t{font-family:var(--fd);font-weight:500;font-size:21px;line-height:1.15;letter-spacing:-.02em;margin:10px 40px 10px 0}
+.card-d{font-size:14px;line-height:1.5;color:var(--ink-2)}
+.card-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.card-p{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.card-p small{display:block;font-family:var(--fb);font-weight:500;font-size:11px;letter-spacing:.04em;color:var(--ink-3);margin-top:5px}
+
+/* кнопки */
+.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;padding:0 22px;border:0;border-radius:999px;background:var(--acc);color:#140904;font-weight:700;font-size:15px;letter-spacing:.01em;white-space:nowrap;
+  box-shadow:0 0 0 1px rgba(255,140,90,.5) inset,0 10px 30px -10px rgba(255,90,31,.8);transition:transform .2s var(--ease),box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-1px);background:#ff6a33;box-shadow:0 0 0 1px rgba(255,170,130,.6) inset,0 14px 36px -10px rgba(255,90,31,.95)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn svg{width:16px;height:16px}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--ink);box-shadow:0 0 0 1px var(--line-2) inset}
+.btn-ghost:hover{background:rgba(255,255,255,.09);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+
+/* загрузка / заглушка */
+.loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(60% 50% at 50% 45%,#141416,#0a0a0b 70%);transition:opacity .7s var(--ease),visibility 0s .7s}
+.loader.done{opacity:0;visibility:hidden}
+.loader-in{width:min(320px,80vw);text-align:center}
+.loader .logo{justify-content:center;font-size:18px}
+.loader-bar{height:2px;margin:26px 0 14px;background:var(--ink-4);border-radius:2px;overflow:hidden}
+.loader-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--acc),var(--acc-2));transform-origin:left;transform:scaleX(0);transition:transform .25s}
+.loader-txt{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.loader-txt b{color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.fallback{position:absolute;inset:0;z-index:15;display:none;place-items:center;padding:24px}
+.fallback.show{display:grid}
+.fallback-box{max-width:440px;padding:28px;border-radius:24px;border:1px solid var(--line-2);background:rgba(18,18,20,.7);text-align:left;margin-top:-18vh}
+.fallback-box h3{font-family:var(--fd);font-weight:500;font-size:20px;letter-spacing:-.02em;margin-bottom:10px}
+.fallback-box p{font-size:14px;color:var(--ink-2)}
+.fallback-box .btn{margin-top:18px}
+
+/* ---------- блок «Как это будет» ---------- */
+.how{position:relative;padding:clamp(96px,14vw,176px) var(--pad) clamp(72px,9vw,120px);
+  background:radial-gradient(40% 40% at 92% 10%,rgba(255,90,31,.08),rgba(255,90,31,0) 70%),radial-gradient(50% 40% at 0% 80%,rgba(180,138,88,.06),rgba(180,138,88,0) 70%),linear-gradient(180deg,#070708,#0b0b0c 30%,#0a0a0b)}
+.how-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:32px 64px;align-items:end;max-width:1280px;margin:0 auto 56px}
+.how-head h2{font-family:var(--fd);font-weight:500;font-size:clamp(32px,4.6vw,68px);line-height:1;letter-spacing:-.035em;margin-top:22px}
+.how-head p{font-size:clamp(15px,1.2vw,18px);color:var(--ink-2);max-width:42ch}
+.bento{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;max-width:1280px;margin:0 auto}
+.b{position:relative;overflow:hidden;border-radius:26px;padding:clamp(22px,2.4vw,34px);min-height:240px;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);
+  opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease),border-color .3s}
+.b.in{opacity:1;transform:none}
+.b:hover{border-color:var(--line-2)}
+.b-k{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--acc)}
+.b h3{font-family:var(--fd);font-weight:500;font-size:clamp(19px,1.6vw,24px);line-height:1.15;letter-spacing:-.02em;margin:14px 0 10px}
+.b p{font-size:15px;color:var(--ink-2);max-width:44ch}
+.b-1{grid-column:span 7;grid-row:span 2;min-height:520px}
+.b-2{grid-column:span 5}
+.b-3{grid-column:span 5}
+.b-4{grid-column:span 5}
+.b-5{grid-column:span 7}
+.b-1 .huge{position:absolute;right:-.06em;bottom:-.2em;font-family:var(--fd);font-weight:700;font-size:clamp(160px,22vw,330px);line-height:1;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.09);pointer-events:none}
+.thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:28px}
+.thumbs figure{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line-2);aspect-ratio:4/3;background:#151517}
+.thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs figcaption{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);font-size:11px;font-weight:600;letter-spacing:.04em;padding:4px 9px;border-radius:999px;background:rgba(10,10,11,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto;padding-top:28px;position:relative}
+.flow span{font-size:13px;font-weight:500;padding:9px 14px;border-radius:12px;border:1px solid var(--line-2);background:rgba(10,10,11,.6)}
+.flow span.acc{border-color:rgba(255,90,31,.55);color:#ffd9c9;background:rgba(255,90,31,.08)}
+.flow svg{width:18px;height:18px;color:var(--ink-3)}
+.code{margin-top:auto;padding:16px 18px;border-radius:16px;background:rgba(0,0,0,.42);border:1px solid var(--line);font-family:var(--fm);font-size:12.5px;line-height:1.75;color:var(--ink-2);white-space:pre;overflow:hidden}
+.code .k{color:#9ad1ff}.code .s{color:#ffc29f}.code .n{color:var(--acc-2)}.code .c{color:var(--ink-3)}
+.funnel{margin-top:auto;display:grid;gap:8px;padding-top:18px}
+.funnel div{display:grid;grid-template-columns:112px 1fr 40px;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+.funnel i{height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,.28),rgba(255,255,255,.12));transform-origin:left;transform:scaleX(0);transition:transform 1.1s var(--ease)}
+.b.in .funnel i{transform:scaleX(var(--w))}
+.funnel div:last-child i{background:linear-gradient(90deg,var(--acc),var(--acc-2))}
+.funnel b{font-weight:600;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.tg{margin-top:auto;align-self:flex-start;max-width:320px;padding:14px 16px 10px;border-radius:18px 18px 18px 6px;background:#1c2733;border:1px solid rgba(120,170,220,.18);font-size:13.5px;line-height:1.45}
+.tg .h{font-weight:700;color:#7cc3ff;margin-bottom:4px}
+.tg .m{color:#dfe9f3}
+.tg .t{text-align:right;font-size:11px;color:rgba(223,233,243,.5);margin-top:4px}
+.swap{margin-top:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:22px}
+.swap code{font-family:var(--fm);font-size:13px;padding:9px 13px;border-radius:12px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);color:var(--ink-2)}
+.swap code.acc{border-color:rgba(255,90,31,.5);color:#ffd9c9}
+.swap svg{width:18px;height:18px;color:var(--acc)}
+.how-cta{max-width:1280px;margin:56px auto 0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;padding-top:32px;border-top:1px solid var(--line)}
+.how-cta p{font-size:15px;color:var(--ink-2);max-width:56ch}
+.how-cta .row{display:flex;flex-wrap:wrap;gap:12px}
+
+.foot{padding:28px var(--pad) calc(28px + var(--safe-b));display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);background:#080809}
+.foot b{color:var(--ink-2);font-weight:600}
+
+/* ---------- модалка ---------- */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(5,5,6,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s}
+.modal.open{opacity:1;visibility:visible;transition:opacity .25s,visibility 0s}
+.modal-box{position:relative;width:min(460px,100%);padding:30px 28px 24px;border-radius:28px;background:linear-gradient(160deg,#1b1b1e,#121214);border:1px solid var(--line-2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 40px 90px -20px rgba(0,0,0,.8);transform:translateY(14px) scale(.98);transition:transform .35s var(--ease)}
+.modal.open .modal-box{transform:none}
+.modal h3{font-family:var(--fd);font-weight:500;font-size:22px;line-height:1.15;letter-spacing:-.02em;margin:10px 44px 6px 0}
+.modal .sub{font-size:14px;color:var(--ink-2)}
+.modal form{display:grid;gap:12px;margin-top:22px}
+.field{display:grid;gap:7px}
+.field span{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.field input{height:52px;padding:0 16px;border-radius:14px;border:1px solid var(--line-2);background:rgba(0,0,0,.35);font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus{border-color:rgba(255,90,31,.7);box-shadow:0 0 0 4px rgba(255,90,31,.14)}
+.field input.bad{border-color:#ff4d4d}
+.modal .btn{width:100%;margin-top:6px}
+.note{display:flex;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;background:rgba(255,90,31,.07);border:1px solid rgba(255,90,31,.25);font-size:12.5px;line-height:1.45;color:#f6d6c7}
+.note svg{flex:0 0 16px;height:16px;margin-top:1px;color:var(--acc)}
+.done-view{display:none;text-align:left;padding-top:8px}
+.modal.sent form{display:none}.modal.sent .done-view{display:block}
+.done-view .ok{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.45);color:var(--acc);margin:18px 0 14px}
+.done-view p{font-size:14px;color:var(--ink-2)}
+.done-view .btn{margin-top:18px}
+
+/* ---------- вход ---------- */
+.ready .hero > *{animation:rise .9s var(--ease) both}
+.ready .hero > :nth-child(2){animation-delay:.08s}.ready .hero > :nth-child(3){animation-delay:.16s}.ready .hero > :nth-child(4){animation-delay:.24s}
+.ready .top{animation:fade .9s .2s both}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* ---------- адаптив ---------- */
+@media (max-width:1180px){
+  .nav{display:none}
+}
+@media (min-width:901px) and (orientation:landscape){
+  .ph-back{display:none}
+}
+@media (max-width:900px), (orientation:portrait){
+  .hero{left:20px;right:20px;top:108px;max-width:none}
+  .hero h1{font-size:clamp(38px,10.4vw,76px);margin:16px 0 16px}
+  .hero p{font-size:15px;max-width:40ch}
+  .hero .chips{display:none}
+  .cap{left:12px;right:12px;bottom:calc(12px + var(--safe-b));width:auto;padding:20px 20px 18px;border-radius:24px;
+    background:linear-gradient(160deg,rgba(30,30,33,.72),rgba(14,14,16,.7));-webkit-backdrop-filter:blur(22px) saturate(1.3);backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--line-2)}
+  .cap-t{font-size:clamp(22px,6vw,34px);margin:12px 0 8px}
+  .cap-t br{display:none}
+  .cap-final{display:block;max-width:none;padding:20px 20px 18px;bottom:calc(12px + var(--safe-b))}
+  .cap-final .cap-t{white-space:normal;font-size:clamp(22px,6vw,30px);margin:12px 0 8px}
+  .cap-final .cap-d{display:block}
+  .cap-final .cap-p{margin-top:14px;padding:12px 0 0;border-left:0;border-top:1px solid var(--line);flex-direction:row;align-items:baseline;gap:4px 10px}
+  .scrim{background:linear-gradient(180deg,rgba(8,8,9,.9) 0%,rgba(8,8,9,.7) 26%,rgba(8,8,9,0) 46%)}
+  .cap-d{font-size:14px}
+  .cap-p{margin-top:14px;padding-top:12px}
+  .cap-p strong{font-size:19px}
+  .cap-bar{display:flex}
+  .cap .btn{margin-top:14px;width:100%}
+  .hot-label,.hot::after{display:none}
+  .hot-core{inset:19px;box-shadow:0 0 0 4px rgba(255,90,31,.25),0 0 14px rgba(255,90,31,.55)}
+  .hot-core::after{inset:4px}
+  .hot-ring{inset:10px}
+  .badge-demo{bottom:auto;top:64px;left:20px;right:auto;font-size:9px;padding:4px 9px}
+  .card{left:12px !important;right:12px;top:auto !important;bottom:calc(12px + var(--safe-b));width:auto}
+}
+@media (min-width:600px) and (orientation:portrait){
+  .cap{left:24px;right:auto;width:min(520px,calc(100% - 48px));bottom:calc(24px + var(--safe-b))}
+  .card{left:24px !important;right:24px;bottom:calc(24px + var(--safe-b))}
+  .hero{left:32px;top:124px}
+  .badge-demo{left:32px}
+}
+@media (max-width:900px){
+  .how-head{grid-template-columns:1fr;margin-bottom:36px}
+  .bento{grid-template-columns:1fr}
+  .b-1,.b-2,.b-3,.b-4,.b-5{grid-column:auto;grid-row:auto;min-height:0}
+  .b-1{min-height:380px}
+  .how-cta{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:420px){
+  .top{height:60px}
+  .pill{height:36px;padding:0 14px;font-size:12px}
+  .modal{place-items:end center;padding:10px}
+  .modal-box{padding:26px 20px calc(20px + var(--safe-b));border-radius:26px}
+  .funnel div{grid-template-columns:96px 1fr 34px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
+  .hot-ring{display:none}
+}
+</style>
+
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="top">
+  <a class="logo" href="#garage" aria-label="TUNE·LAB — наверх">TUNE<i></i>LAB</a>
+  <nav class="nav" aria-label="Этапы прокачки" id="nav"></nav>
+  <button class="pill" type="button" data-order="visit"><b></b>Записаться</button>
+</header>
+<div class="badge-demo">ДЕМО · SHERKHAN MM</div>
+
+<main>
+<section class="garage" id="garage" aria-label="Jeep Gladiator: электропороги и офроуд-тюнинг по шагам">
+  <div class="stage" id="stage">
+    <div class="stage-bg"></div>
+    <img class="ph-back" id="ph-back" alt="" aria-hidden="true" decoding="async">
+    <canvas id="ph" role="img" aria-label="Фото машины: Jeep в салоне с офроуд-тюнингом"></canvas>
+    <div class="vignette"></div>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="hud" id="hud">
+      <div class="hero" id="hero">
+        <div class="kicker">Электропороги и офроуд-тюнинг</div>
+        <h1>Сток —<br>это <em>черновик</em></h1>
+        <p>Листайте вниз — электропорог выедет прямо на фото, а за ним колёса, расширители арок и лифт. Цена — на каждом шаге.</p>
+        <div class="chips"><span class="chip">4 детали</span><span class="chip">цены — пример</span><span class="chip">заявка в один клик</span></div>
+      </div>
+      <div class="hint" id="hint">Листайте<i></i></div>
+      <div id="caps"></div>
+      <div class="hots" id="hots"></div>
+      <div class="measure" id="measure" aria-hidden="true"><i></i><span class="num">+0 мм</span></div>
+      <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-t">
+        <button class="card-x" type="button" aria-label="Закрыть карточку"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+        <div class="card-k" id="card-k"></div>
+        <h3 class="card-t" id="card-t"></h3>
+        <p class="card-d" id="card-d"></p>
+        <div class="card-row">
+          <div class="card-p" id="card-p"></div>
+          <button class="btn" type="button" id="card-order">Заказать</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loader" id="loader" role="status" aria-live="polite">
+      <div class="loader-in">
+        <div class="logo">TUNE<i></i>LAB</div>
+        <div class="loader-bar"><i id="loader-bar"></i></div>
+        <div class="loader-txt"><span id="loader-msg">Загружаем фото</span><b id="loader-pct">0 %</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how" aria-labelledby="how-t">
+  <div class="how-head">
+    <div>
+      <div class="kicker">Для вашего магазина</div>
+      <h2 id="how-t">Как это будет<br>на ваших машинах</h2>
+    </div>
+    <p>Эта сцена собрана из трёх ваших снимков. Подставляем другие фото, ваши детали и цены — и страница продаёт тюнинг ещё до звонка.</p>
+  </div>
+
+  <div class="bento">
+    <article class="b b-1">
+      <div class="b-k">Ваши фото</div>
+      <h3>Три снимка из салона — уже сцена</h3>
+      <p>Камера сама проезжает по деталям, каждая подсвечивается по контуру. Нужна «живая» машина со всех сторон — есть и 3D-режим.</p>
+      <div class="thumbs">
+        <figure><img src="foto/14.jpg" alt="Jeep Gladiator в салоне, вид 3/4 спереди" loading="lazy" decoding="async"><figcaption>общий вид</figcaption></figure>
+        <figure><img src="foto/13.jpg" alt="Выдвинутый электропорог крупно" loading="lazy" decoding="async"><figcaption>порог выдвинут</figcaption></figure>
+        <figure><img src="foto/12.jpg" alt="Порог и подвеска снизу на подъёмнике" loading="lazy" decoding="async"><figcaption>вид снизу</figcaption></figure>
+      </div>
+      <div class="flow">
+        <span>Ваши фото</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span>Контуры деталей</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span class="acc">Сцена, как здесь</span>
+        <a class="btn btn-ghost" href="3d.html" style="height:40px;font-size:13px;margin-left:auto">Посмотреть 3D-пример
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+      </div>
+    </article>
+
+    <article class="b b-2">
+      <div class="b-k">Один конфиг</div>
+      <h3>Детали, цены и контуры — в одном месте</h3>
+      <p>Поменяли цену — она обновилась в подписи, на точке и в заявке. Контур детали — список точек в долях кадра.</p>
+      <div class="code" aria-label="Пример конфига"><span class="c">// config.js</span>
+{ <span class="k">name</span>: <span class="s">"Электропороги"</span>, <span class="k">price</span>: <span class="n">89000</span>,
+  <span class="k">hot</span>: [<span class="n">0.70</span>, <span class="n">0.57</span>] },
+{ <span class="k">name</span>: <span class="s">"Лифт +63 мм"</span>, <span class="k">price</span>: <span class="n">145000</span> }</div>
+    </article>
+
+    <article class="b b-3">
+      <div class="b-k">Яндекс Метрика</div>
+      <h3>Цели на каждом шаге</h3>
+      <p>Видно, до какой детали долистывают и что заказывают чаще.</p>
+      <div class="funnel" aria-label="Пример воронки">
+        <div><span>Электропороги</span><i style="--w:1"></i><b>100%</b></div>
+        <div><span>Колёса</span><i style="--w:.78"></i><b>78%</b></div>
+        <div><span>Лифт</span><i style="--w:.64"></i><b>64%</b></div>
+        <div><span>«Заказать»</span><i style="--w:.16"></i><b>16%</b></div>
+      </div>
+    </article>
+
+    <article class="b b-4">
+      <div class="b-k">Заявки</div>
+      <h3>Сразу в Telegram и на почту</h3>
+      <p>Имя, телефон и выбранная деталь — менеджеру за секунды.</p>
+      <div class="tg" aria-label="Пример уведомления">
+        <div class="h">TUNE·LAB · заявка с сайта</div>
+        <div class="m">Электропороги — 89 000 ₽<br>Андрей · +7 9•• •••-••-27</div>
+        <div class="t">12:41</div>
+      </div>
+    </article>
+
+    <article class="b b-5">
+      <div class="b-k">Масштаб</div>
+      <h3>Новая машина — новая страница</h3>
+      <p>Без переделки кода: новые фото и контуры деталей в конфиге — проезд камеры, точки с ценами и форма заявки работают сами.</p>
+      <div class="swap">
+        <code>14.jpg · 13.jpg · 12.jpg</code>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>
+        <code class="acc">новая-машина/*.jpg</code>
+        <code>config.js</code>
+      </div>
+    </article>
+  </div>
+
+  <div class="how-cta">
+    <p>Это демонстрация подхода: детали и цены — примерные. Для вашего магазина соберём то же самое на ваших машинах и товарах.</p>
+    <div class="row">
+      <button class="btn" type="button" data-order="visit">Оставить заявку</button>
+      <button class="btn btn-ghost" type="button" id="to-top">Наверх — пройти ещё раз
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <span><b>TUNE·LAB</b> — вымышленный бренд. Цены — пример. Фото — материалы заказчика.</span>
+  <span>Демонстрационная страница · <a href="3d.html">3D-режим</a></span>
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-t">
+  <div class="modal-box">
+    <button class="card-x" type="button" data-close aria-label="Закрыть"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+    <div class="card-k">Заявка</div>
+    <h3 id="modal-t">Заявка</h3>
+    <div class="sub" id="modal-sub"></div>
+    <form id="form" novalidate>
+      <label class="field"><span>Имя</span><input name="name" id="f-name" autocomplete="name" placeholder="Как к вам обращаться" required></label>
+      <label class="field"><span>Телефон</span><input name="tel" id="f-tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" required></label>
+      <button class="btn" type="submit">Отправить заявку</button>
+    </form>
+    <div class="done-view" role="status">
+      <div class="ok"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+      <h3 style="margin:0 0 6px">Готово — это была демо-заявка</h3>
+      <p>Никуда не отправлено. В рабочей версии менеджер уже видел бы её в Telegram и на почте.</p>
+      <button class="btn btn-ghost" type="button" data-close>Закрыть</button>
+    </div>
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>
+      <span>Это демо: заявка никуда не отправляется. В рабочей версии — сразу вам в Telegram и на почту.</span></div>
+  </div>
+</div>
+
+<noscript><div style="position:fixed;inset:auto 16px 16px 16px;z-index:99;padding:16px;border-radius:16px;background:#1a1a1c;color:#f3f1ec;font:14px/1.5 system-ui">Для сцены включите JavaScript.</div></noscript>
+
+<script type="module">
+/* =====================================================================
+   КОНФИГ — всё, что меняется под заказчика, живёт здесь.
+   Координаты — в ДОЛЯХ кадра: x — от левого края фото (0…1), y — от верхнего (0…1).
+   main.side: 'left' — подпись точки слева (по умолчанию справа).
+   Подобрать точки: откройте страницу с ?edit — клик по фото покажет координаты.
+   ===================================================================== */
+// эллипс → многоугольник (для колёс): центр, полуоси в долях кадра, поворот в градусах
+const ell = (cx, cy, rx, ry, rot = 0, n = 40, W = 1920, H = 1440) => {
+  const a = rot * Math.PI / 180, out = [];
+  for (let i = 0; i < n; i++) {
+    const t = 2 * Math.PI * i / n, X = rx * W * Math.cos(t), Y = ry * H * Math.sin(t);
+    out.push([cx + (X * Math.cos(a) - Y * Math.sin(a)) / W, cy + (X * Math.sin(a) + Y * Math.cos(a)) / H]);
+  }
+  return out;
+};
+
+const CONFIG = {
+  brand: 'TUNE·LAB',
+  main: '14',                                   // кадр для первого экрана и финала с точками
+  photos: {
+    '14': { src: 'foto/14.jpg', w: 1920, h: 1440, about: 'общий вид, 3/4 спереди' },
+    '13': { src: 'foto/13.jpg', w: 1920, h: 1440, about: 'сбоку снизу: выдвинутый порог' },
+    '12': { src: 'foto/12.jpg', w: 1920, h: 1440, about: 'порог на подъёмнике, вид снизу' },
+  },
+  maxScale: 1.45,      // не крупнее 1,45 экранного px на 1 px фото — дальше начинается «мыло»
+  maxZoom: 2.0,        // и не больше ×2 от полного кадра
+  parts: [
+    {
+      id: 'steps', tag: 'Электропороги',
+      title: 'Электропороги',
+      lead: 'Выезжают при открытии двери и прячутся под кузов на ходу — клиренс не страдает.',
+      price: 89000, from: true, unit: 'пара с установкой',
+      card: { name: 'Электропороги', badge: 'Выезжают при открытии двери', text: 'Ступень выдвигается за секунду, когда открываете дверь, и убирается под кузов, когда закрываете. Алюминиевый профиль, подсветка, защита от грязи.', unit: 'пара с установкой' },
+      stage: { ph: '13', reveal: [0.48, 0.88], polys: [
+        [[0.443,0.79],[0.447,0.77],[0.705,0.598],[0.72,0.597],[0.722,0.632],[0.505,0.85],[0.447,0.852]],
+        [[0.355,0.735],[0.39,0.715],[0.41,0.73],[0.445,0.79],[0.447,0.83],[0.43,0.835],[0.40,0.79],[0.375,0.775],[0.355,0.76]],
+      ] },
+      main: { hot: [0.70, 0.575], polys: [[[0.641,0.597],[0.643,0.586],[0.70,0.562],[0.764,0.535],[0.767,0.556],[0.705,0.588],[0.655,0.616]]] },
+    },
+    {
+      id: 'flares', tag: 'Расширители',
+      title: 'Расширители<br>арок',
+      lead: 'Закрывают вынос колёс и ловят камни и грязь из-под протектора.',
+      price: 58000, from: true, unit: '4 арки с установкой',
+      card: { name: 'Расширители арок', text: 'Комплект на 4 арки из ударопрочного пластика. Под вынос колёс до +40 мм, крепёж в заводские точки.', unit: '4 арки с установкой' },
+      stage: { ph: '13', polys: [
+        [[0.25,0.0],[0.29,0.10],[0.32,0.20],[0.345,0.30],[0.36,0.40],[0.37,0.50],[0.38,0.60],[0.40,0.67],[0.415,0.70],[0.39,0.715],[0.36,0.67],[0.335,0.57],[0.31,0.46],[0.28,0.34],[0.245,0.22],[0.20,0.10],[0.15,0.0]],
+      ] },
+      main: { hot: [0.585, 0.385], polys: [
+        [[0.396,0.402],[0.412,0.372],[0.47,0.358],[0.53,0.35],[0.585,0.352],[0.617,0.375],[0.633,0.42],[0.641,0.48],[0.638,0.525],[0.622,0.522],[0.614,0.47],[0.598,0.43],[0.565,0.408],[0.515,0.402],[0.465,0.41],[0.425,0.425],[0.402,0.44]],
+        [[0.741,0.49],[0.744,0.43],[0.756,0.407],[0.776,0.401],[0.787,0.415],[0.789,0.475],[0.781,0.478],[0.776,0.45],[0.765,0.437],[0.755,0.45],[0.75,0.49]],
+      ] },
+    },
+    {
+      id: 'wheels', tag: 'Колёса A/T',
+      title: 'A/T-резина<br>на тёмных дисках',
+      lead: 'Грязевой протектор и диски R17: держат на грунте и сразу меняют вид машины.',
+      price: 240000, from: true, unit: 'комплект 4 шт.',
+      card: { name: 'Колёса A/T на дисках R17', text: 'Всесезонный A/T-протектор и тёмные литые диски. Подбор под вылет и лифт, шиномонтаж и балансировка — в цене.', unit: 'комплект 4 шт.' },
+      stage: { ph: '14', polys: [ell(0.5125, 0.645, 0.133, 0.19, -4)] },
+      main: { hot: [0.548, 0.665], side: 'left', polys: [ell(0.5125, 0.645, 0.133, 0.19, -4)] },
+    },
+    {
+      id: 'lift', tag: 'Лифт',
+      title: 'Лифт подвески<br>+63 мм',
+      lead: 'Больше клиренса и места под крупные колёса — для настоящего бездорожья.',
+      price: 145000, from: true, unit: 'комплект с установкой',
+      card: { name: 'Лифт-комплект 2,5″ (+63 мм)', text: 'Пружины, амортизаторы и удлинённые тяги. Развал-схождение после установки — в цене.', unit: 'с установкой' },
+      stage: { ph: '12', polys: [[[0.34,0.36],[0.48,0.37],[0.62,0.40],[0.75,0.43],[0.76,0.47],[0.66,0.49],[0.55,0.49],[0.45,0.48],[0.35,0.47]]],
+               measure: { at: [0.47, 0.49], to: 63, sign: '+', unit: 'мм' } },
+      main: { hot: [0.757, 0.53], polys: [[[0.727,0.47],[0.742,0.425],[0.768,0.405],[0.787,0.425],[0.792,0.5],[0.786,0.585],[0.765,0.605],[0.742,0.6],[0.73,0.57],[0.725,0.52]]] },
+    },
+  ],
+};
+
+/* Таймлайн: доли общего прокрута сцены (0 → 1). show — когда видна подпись, morph — когда «зажигается» деталь. */
+const TL = {
+  hero:  [0.0, 0.06],
+  steps: [
+    { show: [0.08, 0.30],   morph: [0.135, 0.245] },
+    { show: [0.315, 0.465], morph: [0.35, 0.41] },
+    { show: [0.48, 0.63],   morph: [0.52, 0.58] },
+    { show: [0.645, 0.80],  morph: [0.69, 0.75] },
+  ],
+  final: [0.82, 1.0],
+  hots:  [0.845, 0.9],
+};
+
+/* Камера: ph — какой кадр, fx/fy — точка фото в центре внимания (доли), z — зум на десктопе,
+   zm — зум на телефоне (от ширины экрана). ax/ay — где на экране держать точку (по умолчанию правее подписи). */
+const CAM = [
+  { p: 0.000, ph: '14', fx: 0.44,  fy: 0.56,  z: 1.00, zm: 1.30, ax: 0.5, ay: 0.5, aym: 0.66 },
+  { p: 0.055, ph: '14', fx: 0.44,  fy: 0.56,  z: 1.05, zm: 1.36, ax: 0.5, ay: 0.5, aym: 0.62 },
+  { p: 0.130, ph: '13', fx: 0.56,  fy: 0.71,  z: 1.22, zm: 1.95 },   // порог выезжает
+  { p: 0.300, ph: '13', fx: 0.575, fy: 0.70,  z: 1.32, zm: 2.05 },
+  { p: 0.350, ph: '13', fx: 0.30,  fy: 0.40,  z: 1.30, zm: 1.7 },    // расширитель арки
+  { p: 0.465, ph: '13', fx: 0.31,  fy: 0.41,  z: 1.38, zm: 1.78 },
+  { p: 0.520, ph: '14', fx: 0.515, fy: 0.645, z: 1.85, zm: 2.25 },   // колесо
+  { p: 0.630, ph: '14', fx: 0.52,  fy: 0.635, z: 1.93, zm: 2.35 },
+  { p: 0.690, ph: '12', fx: 0.55,  fy: 0.45,  z: 1.2,  zm: 1.75 },   // лифт, вид снизу
+  { p: 0.800, ph: '12', fx: 0.56,  fy: 0.45,  z: 1.27, zm: 1.85 },
+  { p: 0.880, ph: '14', fx: 0.46,  fy: 0.55,  z: 1.00, zm: 1.30, ax: 0.5, ay: 0.44, aym: 0.38 },
+  { p: 1.000, ph: '14', fx: 0.46,  fy: 0.55,  z: 1.00, zm: 1.30, ax: 0.5, ay: 0.44, aym: 0.38 },
+];
+const CAM_DEF = { ax: 0.64, ay: 0.47, axm: 0.5, aym: 0.36 };
+
+/* ===================================================================== */
+const $  = (s, r = document) => r.querySelector(s);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp  = (a, b, t) => a + (b - a) * t;
+const sstep = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+const ease  = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const money = n => new Intl.NumberFormat('ru-RU').format(n).replace(/\s/g, ' ') + ' ₽';
+const pad2  = n => String(n).padStart(2, '0');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EDIT = /[?&]edit\b/.test(location.search);
+const N = CONFIG.parts.length;
+const TOTAL = CONFIG.parts.reduce((s, p) => s + p.price, 0);
+
+/* ---------- интерфейс из конфига ---------- */
+const garage = $('#garage'), stage = $('#stage');
+const capsEl = $('#caps'), hotsEl = $('#hots'), navEl = $('#nav');
+const caps = [], hots = [], navBtns = [];
+
+CONFIG.parts.forEach((p, i) => {
+  const c = document.createElement('article');
+  c.className = 'cap';
+  c.innerHTML = `
+    <div class="cap-k"><b>${pad2(i + 1)}</b><span>/ ${pad2(N)}</span><i></i><em>${p.tag}</em></div>
+    <h2 class="cap-t">${p.title.replace(/<br>/g, ' <br>')}</h2>
+    <p class="cap-d">${p.lead}</p>
+    <div class="cap-p"><span class="from">${p.from ? 'от' : ''}</span><strong>${money(p.price)}</strong><small>${p.unit} · пример</small></div>
+    <div class="cap-bar">${CONFIG.parts.map((_, j) => `<span class="${j <= i ? 'on' : ''}"></span>`).join('')}</div>`;
+  capsEl.appendChild(c); caps.push(c);
+
+  const h = document.createElement('button');
+  h.type = 'button'; h.className = 'hot' + (i === 0 ? ' main' : ''); h.dataset.id = p.id;
+  h.setAttribute('aria-label', `${p.card.name} — ${p.from ? 'от ' : ''}${money(p.price)}`);
+  h.innerHTML = `<span class="hot-ring"></span><span class="hot-core"></span><span class="hot-label">${p.tag}<em>${p.from ? 'от ' : ''}${money(p.price)}</em></span>`;
+  hotsEl.appendChild(h); hots.push(h);
+
+  const nb = document.createElement('button');
+  nb.type = 'button'; nb.textContent = p.tag;
+  nb.addEventListener('click', () => scrollToP((TL.steps[i].morph[1] + TL.steps[i].show[1]) / 2));
+  navEl.appendChild(nb); navBtns.push(nb);
+});
+const capFinal = document.createElement('article');
+capFinal.className = 'cap cap-final';
+capFinal.innerHTML = `
+  <div><div class="cap-k"><b>${pad2(N)}</b><span>/ ${pad2(N)}</span><i></i><em>Собрано</em></div>
+  <h2 class="cap-t">Готово. Жмите на точки</h2></div>
+  <p class="cap-d">На каждой — деталь, цена и кнопка заказа.</p>
+  <div class="cap-p"><span class="from">весь комплект</span><strong>${money(TOTAL)}</strong><small>пример</small></div>
+  <button class="btn" type="button" data-order="all">Заказать комплект</button>`;
+capsEl.appendChild(capFinal);
+
+/* ---------- прокрутка ---------- */
+const scrollSpan = () => Math.max(1, garage.offsetHeight - stage.offsetHeight);
+const readProgress = () => clamp(-garage.getBoundingClientRect().top / scrollSpan());
+function scrollToP(p, smooth = !reduced) { window.scrollTo({ top: garage.offsetTop + p * scrollSpan(), behavior: smooth ? 'smooth' : 'auto' }); }
+$('#to-top').addEventListener('click', () => scrollToP(0));
+$('.logo').addEventListener('click', e => { e.preventDefault(); scrollToP(0); });
+
+/* ---------- HUD ---------- */
+const heroEl = $('#hero'), hintEl = $('#hint'), scrimEl = $('#scrim'), measureEl = $('#measure'), measureTxt = $('#measure span');
+const setVis = (el, o, y) => {
+  if (el._o !== o) { el.style.opacity = o.toFixed(3); el.style.setProperty('--o', o.toFixed(3)); el._o = o; }
+  const ty = y.toFixed(1);
+  if (el._y !== ty) { el.style.transform = `translate3d(0,${ty}px,0)`; el._y = ty; }
+};
+let activeStep = -1, capHide = 0;
+function updateHUD(s) {
+  const ho = 1 - sstep(TL.hero[1] - 0.045, TL.hero[1], s);
+  setVis(heroEl, ho, -(1 - ho) * 30);
+  heroEl.style.pointerEvents = ho > .5 ? 'auto' : 'none';
+  hintEl.style.opacity = (1 - sstep(0.004, 0.035, s)).toFixed(3);
+  scrimEl.style.opacity = (0.3 + 0.7 * ho).toFixed(3);
+
+  let act = -1;
+  TL.steps.forEach((st, i) => {
+    const a = sstep(st.show[0], st.show[0] + 0.03, s), b = sstep(st.show[1] - 0.03, st.show[1], s);
+    const o = a * (1 - b);
+    setVis(caps[i], o, (1 - a) * 26 - b * 26);
+    caps[i].classList.toggle('live', o > .6);
+    const fill = caps[i].querySelector('.cap-bar span:nth-child(' + (i + 1) + ')');
+    fill.style.opacity = (0.35 + 0.65 * sstep(st.morph[0], st.morph[1], s)).toFixed(3);
+    const next = TL.steps[i + 1] ? TL.steps[i + 1].show[0] : TL.final[0];
+    if (s >= st.show[0] && s < next) act = i;
+  });
+  if (s >= TL.final[0]) act = N;
+  capHide += ((openId ? 1 : 0) - capHide) * 0.18;
+  const fa = sstep(TL.final[0], TL.final[0] + 0.03, s) * (1 - capHide);
+  setVis(capFinal, fa, (1 - fa) * 26);
+  capFinal.classList.toggle('live', fa > .6);
+  if (act !== activeStep) { activeStep = act; navBtns.forEach((b, i) => b.classList.toggle('on', i === act)); }
+}
+
+/* ---------- карточка и модалка ---------- */
+const card = $('#card'), modal = $('#modal');
+let openId = null, pinned = false, closeTimer = 0, hoverId = null;
+const partById = id => CONFIG.parts.find(p => p.id === id);
+function openCard(id, pin = false) {
+  clearTimeout(closeTimer);
+  const p = partById(id); if (!p) return;
+  const i = CONFIG.parts.indexOf(p);
+  $('#card-k').textContent = p.card.badge ? `${pad2(i + 1)} · ${p.card.badge}` : `${pad2(i + 1)} · ${p.tag}`;
+  $('#card-t').textContent = p.card.name;
+  $('#card-d').textContent = p.card.text;
+  $('#card-p').innerHTML = `${p.from ? '<span style="font-size:.6em;opacity:.6">от </span>' : ''}${money(p.price)}<small>${p.card.unit} · пример</small>`;
+  openId = id; pinned = pin || pinned;
+  hots.forEach(h => h.classList.toggle('on', h.dataset.id === id));
+  card.classList.add('open');
+  placeCard();
+}
+function closeCard() { openId = null; pinned = false; hots.forEach(h => h.classList.remove('on')); card.classList.remove('open'); }
+const laterClose = () => { clearTimeout(closeTimer); if (!pinned) closeTimer = setTimeout(closeCard, 380); };
+const isSheet = () => matchMedia('(max-width:900px), (orientation:portrait)').matches;
+const hotPos = {};
+function placeCard() {
+  if (!openId || isSheet()) { card.style.left = card.style.top = ''; return; }
+  const hp = hotPos[openId]; if (!hp) return;
+  const W = stage.clientWidth, H = stage.clientHeight, cw = card.offsetWidth, ch = card.offsetHeight;
+  let x = hp.x > W * 0.55 ? hp.x - cw - 40 : hp.x + 40;
+  let y = hp.y - ch * 0.5;
+  x = clamp(x, 16, W - cw - 16); y = clamp(y, 80, H - ch - 16);
+  card.style.left = x + 'px'; card.style.top = y + 'px';
+}
+hots.forEach(h => {
+  const id = h.dataset.id;
+  h.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { hoverId = id; openCard(id); } });
+  h.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { hoverId = null; laterClose(); } });
+  h.addEventListener('focus', () => openCard(id));
+  h.addEventListener('click', e => { e.stopPropagation(); if (openId === id && pinned) closeCard(); else { pinned = false; openCard(id, true); } });
+});
+card.addEventListener('pointerenter', () => clearTimeout(closeTimer));
+card.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') laterClose(); });
+card.addEventListener('click', e => e.stopPropagation());
+$('.card-x', card).addEventListener('click', closeCard);
+$('#card-order').addEventListener('click', () => openModal(openId));
+stage.addEventListener('click', () => { if (openId) closeCard(); });
+
+const fName = $('#f-name'), fTel = $('#f-tel');
+let lastFocus = null;
+function openModal(what) {
+  lastFocus = document.activeElement;
+  const p = partById(what);
+  if (p) { $('#modal-t').textContent = p.card.name; $('#modal-sub').textContent = `${p.from ? 'от ' : ''}${money(p.price)} · ${p.card.unit} · цена — пример`; }
+  else if (what === 'all') { $('#modal-t').textContent = 'Весь комплект'; $('#modal-sub').textContent = `${CONFIG.parts.map(x => x.tag.toLowerCase()).join(', ')} — от ${money(TOTAL)} · пример`; }
+  else { $('#modal-t').textContent = 'Запись на установку'; $('#modal-sub').textContent = 'Перезвоним, уточним машину и подберём детали.'; }
+  modal.classList.remove('sent');
+  modal.classList.add('open');
+  document.documentElement.classList.add('lock');
+  setTimeout(() => fName.focus({ preventScroll: true }), 60);
+}
+function closeModal() { modal.classList.remove('open'); document.documentElement.classList.remove('lock'); lastFocus && lastFocus.focus && lastFocus.focus({ preventScroll: true }); }
+document.addEventListener('click', e => {
+  const o = e.target.closest('[data-order]'); if (o) { e.stopPropagation(); openModal(o.dataset.order); }
+  if (e.target.closest('[data-close]')) closeModal();
+});
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (modal.classList.contains('open')) closeModal(); else closeCard(); } });
+fTel.addEventListener('input', () => {
+  let d = fTel.value.replace(/\D/g, ''); if (!d) { fTel.value = ''; return; }
+  if (d[0] === '8') d = '7' + d.slice(1); if (d[0] !== '7') d = '7' + d; d = d.slice(0, 11);
+  const r = d.slice(1); let out = '+7';
+  if (r.length) out += ' ' + r.slice(0, 3); if (r.length > 3) out += ' ' + r.slice(3, 6);
+  if (r.length > 6) out += '-' + r.slice(6, 8); if (r.length > 8) out += '-' + r.slice(8, 10);
+  fTel.value = out; fTel.classList.remove('bad');
+});
+fName.addEventListener('input', () => fName.classList.remove('bad'));
+$('#form').addEventListener('submit', e => {
+  e.preventDefault();
+  const okN = fName.value.trim().length >= 2, okT = fTel.value.replace(/\D/g, '').length === 11;
+  fName.classList.toggle('bad', !okN); fTel.classList.toggle('bad', !okT);
+  if (!okN) return fName.focus(); if (!okT) return fTel.focus();
+  modal.classList.add('sent');   // демо: ничего не отправляем
+});
+
+const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .18 });
+document.querySelectorAll('.b').forEach((b, i) => { b.style.transitionDelay = (i % 3) * 80 + 'ms'; io.observe(b); });
+
+/* =====================================================================
+   ФОТО-ДВИЖОК: canvas рисует фото прямо из исходника в нужном масштабе
+   (резко на любом экране), поверх — затемнение, раскрытие детали, контур-свечение, блик.
+   ===================================================================== */
+const cv = $('#ph'), ctx = cv.getContext('2d');
+const back = $('#ph-back');
+const loader = $('#loader'), loaderBar = $('#loader-bar'), loaderPct = $('#loader-pct'), loaderMsg = $('#loader-msg');
+const setLoad = (f, msg) => { f = clamp(f); loaderBar.style.transform = `scaleX(${f.toFixed(3)})`; loaderPct.textContent = Math.round(f * 100) + ' %'; if (msg) loaderMsg.textContent = msg; };
+
+const IMG = {};                         // id → { el, w, h }
+let W = 1, H = 1, DPR = 1, portrait = false, dirty = true;
+let layers = [];                        // что рисуем в этом кадре: [{ ph, s, tx, ty, a }]
+const camOf = {};                       // последняя камера каждого кадра (для точек и мерки)
+
+async function loadPhoto(url, onProg) {
+  try {
+    const res = await fetch(url, { cache: 'force-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const total = +res.headers.get('content-length') || 0;
+    let blob;
+    if (res.body && total && res.body.getReader) {
+      const rd = res.body.getReader(), chunks = []; let got = 0;
+      for (;;) { const { done, value } = await rd.read(); if (done) break; chunks.push(value); got += value.length; onProg(got / total); }
+      blob = new Blob(chunks, { type: res.headers.get('content-type') || 'image/jpeg' });
+    } else blob = await res.blob();
+    const im = new Image(); im.src = URL.createObjectURL(blob);
+    await im.decode(); onProg(1); return im;
+  } catch (e) {
+    const im = await new Promise((ok, fail) => { const im = new Image(); im.onload = () => ok(im); im.onerror = fail; im.src = url; });
+    onProg(1); return im;
+  }
+}
+function placeholder(id, w, h) {
+  // запасной кадр, если фото нет на месте: нейтральный градиент с подписью
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, w, h);
+  gr.addColorStop(0, '#1b1c1f'); gr.addColorStop(1, '#0d0d0f'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = 2;
+  for (let x = 0; x < w; x += 96) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+  for (let y = 0; y < h; y += 96) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  g.textAlign = 'center'; g.fillStyle = 'rgba(243,241,236,.55)'; g.font = '600 64px Onest, system-ui, sans-serif';
+  g.fillText('фото заказчицы', w / 2, h / 2);
+  g.fillStyle = 'rgba(243,241,236,.3)'; g.font = '500 34px Onest, system-ui, sans-serif';
+  g.fillText(`${CONFIG.photos[id].src} · ${CONFIG.photos[id].about}`, w / 2, h / 2 + 60);
+  return c;
+}
+
+/* геометрия деталей в пикселях кадра + длины контуров */
+const geo = (ph, polys) => {
+  const { w, h } = IMG[ph];
+  const P = polys.map(pts => pts.map(([x, y]) => [x * w, y * h]));
+  const lens = P.map(pp => pp.reduce((L, pt, k) => { const q = pp[(k + 1) % pp.length]; return L + Math.hypot(q[0] - pt[0], q[1] - pt[1]); }, 0));
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  P.flat().forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); });
+  return { polys: P, lens, box: [x0, y0, x1, y1] };
+};
+let G = [];
+function buildGeo() {
+  G = CONFIG.parts.map(p => ({ stage: geo(p.stage.ph, p.stage.polys), main: geo(CONFIG.main, p.main.polys) }));
+}
+
+function resize() {
+  W = stage.clientWidth; H = stage.clientHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  portrait = W <= 900 || H >= W;
+  dirty = true;
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+/* камера */
+function frameCam(ph, fx, fy, z, ax, ay) {
+  const { w, h } = IMG[ph];
+  const base = portrait ? W / w : Math.max(W / w, H / h);
+  const zz = portrait ? z : Math.min(z, CONFIG.maxZoom);
+  const sc = Math.min(base * zz, Math.max(base, CONFIG.maxScale));
+  const pw = w * sc, phh = h * sc;
+  let tx = ax * W - fx * pw, ty = ay * H - fy * phh;
+  tx = pw >= W ? clamp(tx, W - pw, 0) : (W - pw) / 2;
+  ty = phh >= H ? clamp(ty, H - phh, 0) : clamp(ty, 0, H - phh);
+  return { ph, s: sc, tx, ty };
+}
+function camAt(s) {
+  let i = 0; while (i < CAM.length - 2 && s > CAM[i + 1].p) i++;
+  const a = CAM[i], b = CAM[i + 1];
+  const u = clamp((s - a.p) / (b.p - a.p)), t = ease(u);
+  const ax_ = k => portrait ? (k.axm ?? CAM_DEF.axm) : (k.ax ?? CAM_DEF.ax);
+  const ay_ = k => portrait ? (k.aym ?? CAM_DEF.aym) : (k.ay ?? CAM_DEF.ay);
+  const z_ = k => portrait ? k.zm : k.z;
+  if (a.ph === b.ph) {
+    // тот же кадр: панорама + наезд; на длинном перелёте камера чуть отъезжает и снова наезжает
+    const dist = Math.hypot(b.fx - a.fx, b.fy - a.fy);
+    const dip = 1 - Math.sin(Math.PI * t) * clamp(dist * 1.4, 0, 0.3);
+    const z = Math.exp(lerp(Math.log(z_(a)), Math.log(z_(b)), t)) * dip;
+    layers = [{ ...frameCam(a.ph, lerp(a.fx, b.fx, t), lerp(a.fy, b.fy, t), z, lerp(ax_(a), ax_(b), t), lerp(ay_(a), ay_(b), t)), a: 1 }];
+  } else {
+    // смена кадра: старый продолжает наезд и растворяется, новый «приезжает» из лёгкого приближения
+    const c = sstep(0.38, 0.66, u);
+    const A = frameCam(a.ph, a.fx, a.fy, z_(a) * (1 + 0.16 * u), ax_(a), ay_(a));
+    const B = frameCam(b.ph, b.fx, b.fy, z_(b) * (1 + 0.14 * (1 - u)), ax_(b), ay_(b));
+    layers = c < 0.001 ? [{ ...A, a: 1 }] : c > 0.999 ? [{ ...B, a: 1 }] : [{ ...A, a: 1 }, { ...B, a: c }];
+    // смена кадра идёт через лёгкое затемнение — без «двойной экспозиции»
+    layers.fade = Math.sin(Math.PI * sstep(0.3, 0.74, u)) * 0.55;
+  }
+  layers.forEach(L => camOf[L.ph] = L);
+}
+
+const tracePoly = pp => { ctx.moveTo(pp[0][0], pp[0][1]); for (let k = 1; k < pp.length; k++) ctx.lineTo(pp[k][0], pp[k][1]); ctx.closePath(); };
+const sweeps = CONFIG.parts.map(() => ({ t: 1, prev: 0 }));
+const hl = CONFIG.parts.map(() => 0);
+let rollT = 9, finPrev = 0, backPh = null;
+
+function drawHighlights(L, items, time) {
+  // items: [{ g, a, d, reveal, sweep }]
+  const { s: sc } = L, k = 1 / sc;
+  const im = IMG[L.ph];
+  const wMax = Math.max(0, ...items.map(o => o.a));
+  if (wMax < 0.003) return false;
+  // затемняем кадр, кроме активных деталей (раскрывающуюся деталь — тоже: она «выедет» поверх)
+  ctx.beginPath(); ctx.rect(-im.w, -im.h, im.w * 3, im.h * 3);
+  items.forEach(o => { if (o.a > 0.02 && !o.reveal) o.g.polys.forEach(tracePoly); });
+  ctx.fillStyle = `rgba(6,6,8,${(0.52 * wMax * L.a).toFixed(3)})`;
+  ctx.fill('evenodd');
+  const pulse = reduced ? 1 : 0.72 + 0.28 * Math.sin(time * 3.1);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  let anim = false;
+  items.forEach(o => {
+    const a = o.a * L.a; if (a < 0.003) return;
+    const g = o.g, [x0, y0, x1, y1] = g.box;
+    if (o.reveal) {
+      // «порог выезжает»: деталь раскрывается от кузова наружу, со сдвигом и сканирующей кромкой
+      const [dx0, dy0] = o.reveal, dl = Math.hypot(dx0, dy0), dx = dx0 / dl, dy = dy0 / dl;
+      const pts = g.polys.flat(), proj = pts.map(([x, y]) => x * dx + y * dy);
+      const p0 = Math.min(...proj), p1 = Math.max(...proj), f = p0 + (p1 - p0) * o.d;
+      const nx = -dy, ny = dx, BIG = 5000, cx = pts[0][0], cy = pts[0][1];
+      const base0 = p0 - (cx * dx + cy * dy), base1 = f - (cx * dx + cy * dy);
+      const half = (b) => [[cx + dx * b + nx * BIG, cy + dy * b + ny * BIG], [cx + dx * b - nx * BIG, cy + dy * b - ny * BIG]];
+      const [qa, qb] = half(base0 - 50), [qc, qd] = half(base1);
+      const slide = (1 - o.d) * 60;
+      ctx.save();
+      ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
+      ctx.beginPath(); ctx.moveTo(...qa); ctx.lineTo(...qb); ctx.lineTo(...qd); ctx.lineTo(...qc); ctx.closePath(); ctx.clip();
+      ctx.globalAlpha = L.a * Math.min(1, o.a * 1.2);
+      ctx.drawImage(im.el, -dx * slide, -dy * slide, im.w, im.h);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = `rgba(255,96,40,${(0.12 * a).toFixed(3)})`; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+      ctx.restore();
+      if (o.d > 0.01 && o.d < 0.995) {
+        // кромка сканирования
+        anim = true;
+        ctx.save(); ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
+        ctx.beginPath(); ctx.moveTo(...qc); ctx.lineTo(...qd);
+        ctx.strokeStyle = `rgba(255,120,60,${(0.5 * a).toFixed(3)})`; ctx.lineWidth = 10 * k; ctx.stroke();
+        ctx.strokeStyle = `rgba(255,240,228,${(0.95 * a).toFixed(3)})`; ctx.lineWidth = 2 * k; ctx.stroke();
+        ctx.restore();
+      }
+    } else {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = `rgba(255,96,40,${(0.075 * a).toFixed(3)})`;
+      ctx.beginPath(); g.polys.forEach(tracePoly); ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // контур: мягкое свечение + яркая линия, прорисовка по мере прокрутки
+    g.polys.forEach((pp, j) => {
+      const Lj = g.lens[j];
+      ctx.setLineDash([Lj * o.d, Lj + 1]);
+      ctx.beginPath(); tracePoly(pp);
+      ctx.strokeStyle = `rgba(255,90,31,${(0.2 * a * pulse).toFixed(3)})`; ctx.lineWidth = 14 * k; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,120,60,${(0.55 * a).toFixed(3)})`; ctx.lineWidth = 4.5 * k; ctx.stroke();
+      ctx.strokeStyle = `rgba(255,238,226,${(0.95 * a).toFixed(3)})`; ctx.lineWidth = 1.6 * k; ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    // проход блика по детали, когда она загорается
+    if (o.sweep < 1) {
+      anim = true;
+      const bw = x1 - x0, cx = lerp(x0 - bw * 0.3, x1 + bw * 0.3, ease(o.sweep));
+      ctx.save(); ctx.beginPath(); g.polys.forEach(tracePoly); ctx.clip();
+      const gr = ctx.createLinearGradient(cx - bw * 0.22, y0, cx + bw * 0.22, y1);
+      const al = Math.sin(Math.PI * o.sweep) * 0.5 * a;
+      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, `rgba(255,236,220,${al.toFixed(3)})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gr; ctx.fillRect(x0, y0, bw, y1 - y0);
+      ctx.restore();
+    }
+  });
+  return true;
+}
+
+function draw(s, time, fin) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  let busy = false;
+  const st = TL.steps;
+  layers.forEach(L => {
+    const im = IMG[L.ph];
+    ctx.setTransform(DPR * L.s, 0, 0, DPR * L.s, DPR * L.tx, DPR * L.ty);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.globalAlpha = L.a;
+    ctx.drawImage(im.el, 0, 0, im.w, im.h);
+    ctx.globalAlpha = 1;
+    // мягкие края, если кадр не занимает экран по высоте (телефон)
+    if (im.h * L.s < H - 1) {
+      const f = 64 / L.s;
+      ctx.globalCompositeOperation = 'destination-out';
+      let gr = ctx.createLinearGradient(0, 0, 0, f); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, im.w, f);
+      gr = ctx.createLinearGradient(0, im.h - f, 0, im.h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
+      ctx.fillStyle = gr; ctx.fillRect(0, im.h - f, im.w, f);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // что подсвечиваем на этом кадре: этапы + финал (наведение и «перекличка»)
+    const items = [];
+    CONFIG.parts.forEach((p, i) => {
+      if (p.stage.ph === L.ph) {
+        const a = sstep(st[i].morph[0], st[i].morph[0] + 0.02, s) * (1 - sstep(st[i].show[1] - 0.035, st[i].show[1] - 0.005, s));
+        if (a > 0.003 || EDIT) items.push({ g: G[i].stage, a: EDIT ? Math.max(a, .5) : a, d: EDIT ? 1 : sstep(st[i].morph[0], st[i].morph[1], s), reveal: p.stage.reveal, sweep: sweeps[i].t });
+      }
+      if (L.ph === CONFIG.main && (fin > 0.01 || EDIT)) {
+        const r = Math.max(0, 1 - Math.abs((rollT - i * 0.34) - 0.45) / 0.45);
+        const a = Math.max(hl[i], r * 0.9);
+        if (a > 0.003 || EDIT) items.push({ g: G[i].main, a: EDIT ? Math.max(a, .5) : a, d: EDIT || hl[i] > 0.01 ? 1 : clamp((rollT - i * 0.34) / 0.45), sweep: 1 });
+      }
+    });
+    if (drawHighlights(L, items, time)) busy = true;
+    if (layers.fade > 0.001 && L === layers[0] && layers.length > 1) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = `rgba(8,8,9,${layers.fade.toFixed(3)})`; ctx.fillRect(0, 0, cv.width, cv.height);
+    }
+  });
+  return busy;
+}
+
+const toScreen = (ph, [fx, fy]) => { const L = camOf[ph], im = IMG[ph]; return { x: L.tx + fx * im.w * L.s, y: L.ty + fy * im.h * L.s }; };
+
+let lastS = -1, needPulse = false;
+function update(s, dt, time) {
+  // события: деталь загорелась → проход блика; вход в финал → «перекличка» деталей
+  CONFIG.parts.forEach((p, i) => {
+    const v = sstep(TL.steps[i].morph[0], TL.steps[i].morph[1], s);
+    if (sweeps[i].prev < 0.9 && v >= 0.9 && !reduced) sweeps[i].t = 0;
+    sweeps[i].prev = v;
+    if (sweeps[i].t < 1) sweeps[i].t = Math.min(1, sweeps[i].t + dt / 1.1);
+  });
+  const fin = sstep(TL.hots[0], TL.hots[1], s);
+  if (finPrev < 0.5 && fin >= 0.5 && !reduced) rollT = 0;
+  finPrev = fin;
+  if (rollT < 9) rollT += dt;
+  const rolling = rollT < (N - 1) * 0.34 + 1;
+  const focus = hoverId || openId;
+  let hlAct = false;
+  CONFIG.parts.forEach((p, i) => {
+    const target = focus === p.id && fin > 0.5 ? 1 : 0;
+    hl[i] += (target - hl[i]) * (1 - Math.exp(-dt * 9)); if (hl[i] < 0.003) hl[i] = 0; if (hl[i] > 0) hlAct = true;
+  });
+
+  camAt(s);
+  // размытая подложка (видна на телефоне) — от того кадра, что сейчас главный
+  const topPh = layers[layers.length - 1].a > 0.5 ? layers[layers.length - 1].ph : layers[0].ph;
+  if (topPh !== backPh) { backPh = topPh; back.src = IMG[topPh].url || ''; }
+
+  const moving = Math.abs(s - lastS) > 1e-6;
+  if (moving || dirty || hlAct || rolling || needPulse || sweeps.some(x => x.t < 1)) {
+    needPulse = draw(s, time, fin);
+    dirty = false; lastS = s;
+  }
+
+  // хотспоты (на главном кадре)
+  hotsEl.style.opacity = (EDIT ? 1 : fin).toFixed(3);
+  hotsEl.classList.toggle('live', fin > 0.6 || EDIT);
+  if ((fin > 0.001 || EDIT) && camOf[CONFIG.main]) {
+    CONFIG.parts.forEach((p, i) => {
+      const q = toScreen(CONFIG.main, p.main.hot); hotPos[p.id] = q;
+      const hEl = hots[i];
+      hEl.style.transform = `translate3d(${q.x.toFixed(1)}px,${q.y.toFixed(1)}px,0)`;
+      const appear = reduced || EDIT ? 1 : Math.max(clamp((rollT - i * 0.34) / 0.35), rollT >= 9 ? 1 : 0);
+      hEl.style.opacity = (fin < 0.5 && !EDIT ? 0 : appear).toFixed(3);
+      hEl.classList.toggle('left', p.main.side === 'left');
+    });
+    if (openId) placeCard();
+  }
+  // мерка лифта
+  const li = CONFIG.parts.findIndex(p => p.stage.measure);
+  if (li >= 0) {
+    const stp = TL.steps[li], m = CONFIG.parts[li].stage.measure, ph = CONFIG.parts[li].stage.ph;
+    const vis = layers.find(L => L.ph === ph);
+    const mo = vis ? vis.a * sstep(stp.morph[0], stp.morph[0] + 0.02, s) * (1 - sstep(stp.show[1] - 0.03, stp.show[1], s)) : 0;
+    if (mo > 0.001) {
+      const q = toScreen(ph, m.at), tv = sstep(stp.morph[0], stp.morph[1], s);
+      const mx = clamp(q.x + 6, 12, W - (measureEl.offsetWidth || 130) - 12), my = clamp(q.y - 40, 80, H - 120);
+      measureEl.style.transform = `translate3d(${mx.toFixed(1)}px,${my.toFixed(1)}px,0)`;
+      measureTxt.textContent = `${m.sign}${Math.round(tv * m.to)} ${m.unit}`;
+    }
+    measureEl.style.opacity = mo.toFixed(3);
+  }
+}
+
+/* ---------- главный цикл ---------- */
+let sCur = 0, last = performance.now(), visible = true, ready = false;
+new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { rootMargin: '10% 0px' }).observe(garage);
+document.addEventListener('visibilitychange', () => { last = performance.now(); });
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden) return;
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!visible) return;
+  const p = readProgress();
+  sCur = reduced ? p : sCur + (p - sCur) * (1 - Math.exp(-dt * 6));
+  if (Math.abs(p - sCur) < 0.00005) sCur = p;
+  updateHUD(sCur);
+  if (ready) update(sCur, dt, now / 1000);
+}
+requestAnimationFrame(frame);
+
+window.TUNELAB = {
+  jump(p) { scrollToP(p, false); sCur = p; },
+  open: id => openCard(id, true),
+  info: () => ({ layers, size: [W, H], dpr: DPR, hots: { ...hotPos }, photos: Object.fromEntries(Object.entries(IMG).map(([k, v]) => [k, [v.w, v.h, v.ok]])) }),
+};
+
+/* ---------- запуск ---------- */
+(async () => {
+  const ids = Object.keys(CONFIG.photos), prog = Object.fromEntries(ids.map(id => [id, 0]));
+  const tick = () => setLoad(0.05 + 0.9 * ids.reduce((s, id) => s + prog[id], 0) / ids.length);
+  setLoad(0.05, 'Загружаем фото');
+  await Promise.all(ids.map(async id => {
+    const ph = CONFIG.photos[id];
+    try {
+      const el = await loadPhoto(ph.src, f => { prog[id] = f; tick(); });
+      IMG[id] = { el, w: el.naturalWidth, h: el.naturalHeight, url: el.src, ok: true };
+    } catch (e) {
+      console.warn('[TUNE·LAB] нет фото, показываю заглушку:', ph.src);
+      IMG[id] = { el: placeholder(id, ph.w, ph.h), w: ph.w, h: ph.h, url: '', ok: false };
+      prog[id] = 1; tick();
+    }
+  }));
+  buildGeo();
+  setLoad(1, 'Готово');
+  ready = true; dirty = true;
+  back.classList.add('on');
+  setTimeout(() => { loader.classList.add('done'); document.body.classList.add('ready'); }, 200);
+
+  if (EDIT) {
+    const pan = document.createElement('div'); pan.className = 'edit-panel';
+    pan.textContent = 'Режим разметки: клик по фото — координаты в долях кадра.\nКлавиша C — очистить список.';
+    stage.appendChild(pan);
+    const pts = [];
+    cv.addEventListener('click', e => {
+      const L = layers[layers.length - 1], im = IMG[L.ph], r = cv.getBoundingClientRect();
+      const fx = (e.clientX - r.left - L.tx) / (im.w * L.s), fy = (e.clientY - r.top - L.ty) / (im.h * L.s);
+      pts.push(`[${fx.toFixed(3)},${fy.toFixed(3)}]`);
+      pan.textContent = `Кадр ${L.ph}.jpg · точка [${fx.toFixed(3)}, ${fy.toFixed(3)}]\nСписок (для polys):\n[${pts.join(',')}]`;
+    });
+    addEventListener('keydown', e => { if (e.key === 'c' || e.key === 'с') { pts.length = 0; pan.textContent = 'Список очищен.'; } });
+  }
+})();
+</script>
+</body>
+</html>
